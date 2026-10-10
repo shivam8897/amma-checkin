@@ -80,6 +80,7 @@ Most elder-care products are **apps**, and most elderly parents **don't use apps
 - Twilio **webhook signature validation**
 - 23 automated tests covering the call logic, meals and family voices
 - Only one dependency (Express); data in a JSON file you can later move to Postgres
+- **Motion and sound** (`public/fx.js`, `fx.css`): real phone keypad tones, ringback and hang-up sounds in the simulator, scroll reveals, count-ups, confetti on milestones. All sounds are made in the browser (no audio files), play only after a click, and have a 🔊 mute switch; all motion turns off with the system's "reduce motion" setting
 
 ### 💡 Ideas to add next
 See the [Roadmap](#13-roadmap-what-to-add-next): voice answers ("I'm fine"), human-recorded voices, more languages, birthday and festival greetings, doctor appointment reminders, medicine refill reminders, BP readings, connecting the parent straight to the child's phone on SOS, and more.

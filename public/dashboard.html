@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Hind:wght@400;500;600&family=Hind+Guntur:wght@400;600&family=Hind+Madurai:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/fx.css">
+<script src="/fx.js"></script>
 <style>
 :root {
   --paper: #fff7f0; --paper-2: #ffeddf; --sheet: #ffffff; --ink: #1c1917; --ink-soft: #6b625b;
@@ -288,7 +290,55 @@ dialog::backdrop { background: rgba(28,25,23,.5); }
 }
 @media (prefers-reduced-motion: reduce) { .take.recording .round.rec { animation: none; } .spinner { animation-duration: 2.4s; } }
 
-.toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); background: var(--ink); color: var(--sheet); padding: 12px 20px; border-radius: 999px; font-weight: 600; opacity: 0; pointer-events: none; transition: .25s; z-index: 10; max-width: calc(100% - 32px); text-align: center; }
+/* ── Motion ── */
+@keyframes rise-in { from { opacity: 0; transform: translateY(18px); } }
+@keyframes pop-in { 0% { opacity: 0; transform: scale(.4); } 70% { transform: scale(1.12); } 100% { opacity: 1; transform: none; } }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes blink { 50% { opacity: .25; } }
+.enter .family-line, .enter .tabs { animation: rise-in .6s cubic-bezier(.2,.7,.2,1) both; }
+.enter .panel { animation: rise-in .7s cubic-bezier(.2,.7,.2,1) both; animation-delay: var(--d, 0ms); }
+.enter .day i { animation: pop-in .45s cubic-bezier(.3,1.4,.5,1) both; animation-delay: calc(var(--i) * 35ms + 350ms); }
+.enter .chart .lineP { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.6s .5s cubic-bezier(.4,0,.2,1) forwards; }
+.chart circle { transform-box: fill-box; transform-origin: center; }
+.enter .chart circle { animation: pop-in .4s cubic-bezier(.3,1.4,.5,1) both; animation-delay: calc(var(--i) * 90ms + .6s); }
+.today-state.state-wait::before, .today-state.state-alert::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: blink 1.4s ease-in-out infinite; }
+.tab, .btn { position: relative; overflow: hidden; }
+.tab { transition: background .25s, color .25s, box-shadow .25s, transform .15s; }
+.tab:hover { transform: translateY(-1px); }
+
+/* Phone: ringing, picking up, SOS */
+.phone { position: relative; transition: box-shadow .3s; }
+.phone.ringing { animation: ring-shake .6s ease-in-out infinite; }
+.phone.ringing::before, .phone.ringing::after { content: ''; position: absolute; inset: 0; border-radius: inherit; border: 2px solid var(--haldi); animation: ring-wave 1.4s ease-out infinite; pointer-events: none; }
+.phone.ringing::after { animation-delay: .7s; }
+@keyframes ring-shake { 0%, 100% { transform: rotate(0); } 10%, 30% { transform: rotate(-1.4deg); } 20%, 40% { transform: rotate(1.4deg); } 50% { transform: rotate(0); } }
+@keyframes ring-wave { from { opacity: .8; transform: scale(1); } to { opacity: 0; transform: scale(1.12); } }
+.phone.on-air { box-shadow: 0 0 0 3px rgba(22,163,74,.35), 0 20px 50px -20px rgba(22,163,74,.6); }
+.phone.sos { animation: sos .9s ease-out; }
+@keyframes sos { 0%, 40% { box-shadow: 0 0 0 6px rgba(214,52,44,.7), 0 0 60px rgba(214,52,44,.6); } 100% { box-shadow: none; } }
+.screen > div { animation: bubble .4s cubic-bezier(.3,1.4,.5,1) both; }
+@keyframes bubble { from { opacity: 0; transform: translateY(8px) scale(.96); } }
+.screen .line.speaking { box-shadow: 0 0 0 2px var(--haldi), 0 4px 14px -6px rgba(234,88,12,.6); }
+.screen .eq { display: none; color: var(--haldi); margin-left: 6px; }
+.screen .speaking .eq { display: inline-flex; }
+.keypad button { transition: background .15s, transform .08s; }
+.keypad button.hit { background: var(--haldi) !important; transform: scale(.92); }
+
+/* Alerts that just arrived */
+.alert.fresh { animation: alert-in .7s cubic-bezier(.3,1.4,.5,1) both, alert-glow 1.6s ease-out .2s 2; }
+@keyframes alert-in { from { opacity: 0; transform: translateX(24px) scale(.96); } }
+@keyframes alert-glow { 0% { box-shadow: 0 0 0 0 rgba(234,88,12,.5); } 100% { box-shadow: 0 0 0 12px rgba(234,88,12,0); } }
+
+/* Voice studio moments */
+.take.just-saved .take-num { animation: pop-in .5s cubic-bezier(.3,1.4,.5,1); }
+.take.just-saved .wave rect { animation: pop-in .4s both; animation-delay: calc(var(--i) * 8ms); transform-box: fill-box; transform-origin: center; }
+.top-right { display: flex; gap: 10px; align-items: center; }
+@media (prefers-reduced-motion: reduce) {
+  .enter .family-line, .enter .tabs, .enter .panel, .enter .day i, .enter .chart circle, .phone.ringing, .phone.ringing::before, .phone.ringing::after, .phone.sos, .screen > div, .alert.fresh, .take.just-saved .take-num, .take.just-saved .wave rect, .today-state::before { animation: none !important; }
+  .enter .chart .lineP { stroke-dasharray: none; stroke-dashoffset: 0; animation: none; }
+}
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); background: var(--ink); color: var(--sheet); padding: 12px 20px; border-radius: 999px; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .25s, transform .45s cubic-bezier(.3,1.5,.5,1); z-index: 10; box-shadow: 0 12px 30px -10px rgba(28,25,23,.5); max-width: calc(100% - 32px); text-align: center; }
 .toast.on { opacity: 1; transform: translate(-50%, 0); }
 .foot { padding: 32px 0 48px; font-size: .88rem; color: var(--ink-soft); }
 .skeleton { padding: 80px 0; text-align: center; color: var(--ink-soft); }
@@ -302,7 +352,7 @@ dialog::backdrop { background: rgba(28,25,23,.5); }
       <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="var(--haldi)"/><path d="M13 12c1.6 0 2.4 3.7 2.4 5 0 1.4-1.6 1.6-1.6 2.6 0 2.2 3.4 5.6 5.6 5.6 1 0 1.2-1.6 2.6-1.6 1.3 0 5 .8 5 2.4 0 2-2.6 3.5-4.6 3.5C16.6 29.5 10.5 23.4 10.5 17c0-2 1-5 2.5-5z" fill="#fff"/></svg>
       Amma Check-in
     </a>
-    <span class="demo-pill" id="mode-pill" hidden></span>
+    <div class="top-right"><span class="demo-pill" id="mode-pill" hidden></span></div>
   </header>
   <div id="app"><p class="skeleton">Loading your family…</p></div>
   <p class="foot">Amma Check-in is not a medical or emergency service. In an emergency in India, dial 112.</p>
@@ -323,6 +373,8 @@ const LANGS = { te: 'తెలుగు, Telugu', hi: 'हिन्दी, Hindi
 const SPEECH = { te: 'te-IN', hi: 'hi-IN', ta: 'ta-IN', en: 'en-IN' };
 
 let data = null, offline = false, activeId = null;
+let animatedFor = null;        // play the entrance animation once per parent tab
+let freshAlerts = new Set();   // alerts that arrived since the last refresh
 let sim = { checkinId: null, render: null, entry: '' };
 
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2600); }
@@ -336,8 +388,11 @@ async function api(path, opts = {}) {
 }
 
 async function load() {
+  const known = new Set((data?.alerts || []).map(a => a.id));
   try {
     data = await api('/family');
+    freshAlerts = new Set(known.size ? data.alerts.filter(a => !known.has(a.id)).map(a => a.id) : []);
+    if (freshAlerts.size) FX.sfx.alert();
   } catch (e) {
     if (window.DEMO_DATA) { data = window.DEMO_DATA; offline = true; }
     else { $('#app').innerHTML = `<div class="panel skeleton"><h2>We couldn't open this dashboard</h2><p class="muted" style="margin-top:8px">${esc(e.message)}. Check that your link includes your private key.</p></div>`; return; }
@@ -347,6 +402,7 @@ async function load() {
   if (offline) { pill.hidden = false; pill.textContent = 'Static preview with sample data'; }
   else if (data.demoMode) { pill.hidden = false; pill.textContent = 'Demo mode: calls are simulated'; }
   render();
+  if (freshAlerts.size) setTimeout(() => freshAlerts.clear(), 2500); // glow once
 }
 
 // ── Helpers ──────────────────────────────────────────────
@@ -407,7 +463,7 @@ function answerChips(p) {
 
 function strip(p) {
   const icon = { ok: '✓', alert: '!', pending: '…', none: '' };
-  return `<div class="strip" aria-label="Last 14 days">${p.stats.timeline.map(d => `<div class="day st-${d.state}" title="${fmtDay(d.date)}: ${d.state === 'ok' ? 'all well' : d.state === 'alert' ? 'needed attention' : d.state === 'pending' ? 'in progress' : 'no call'}"><i>${icon[d.state]}</i>${new Date(d.date + 'T12:00:00').getDate()}</div>`).join('')}</div>
+  return `<div class="strip" aria-label="Last 14 days">${p.stats.timeline.map((d, i) => `<div class="day st-${d.state}" style="--i:${i}" title="${fmtDay(d.date)}: ${d.state === 'ok' ? 'all well' : d.state === 'alert' ? 'needed attention' : d.state === 'pending' ? 'in progress' : 'no call'}"><i>${icon[d.state]}</i>${new Date(d.date + 'T12:00:00').getDate()}</div>`).join('')}</div>
   <div class="legend"><span><span class="dot ok"></span>All well</span><span><span class="dot bad"></span>Needed attention</span><span><span class="dot wait"></span>In progress</span></div>`;
 }
 
@@ -424,8 +480,8 @@ function sugarChart(p) {
   <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Sugar readings over the last two weeks, average ${avg}">
     <rect class="band" x="${pad}" width="${W - pad * 2}" y="${y(250)}" height="${y(70) - y(250)}" rx="6"/>
     <text x="0" y="${y(250) + 4}">250</text><text x="0" y="${y(70) + 4}">70</text>
-    <path class="lineP" d="${path}"/>
-    ${pts.map((r, i) => `<circle class="${r.value > 250 || r.value < 70 ? 'high' : ''}" cx="${x(i)}" cy="${y(r.value)}" r="4.5"><title>${fmtDay(r.date)}: ${r.value} mg/dL</title></circle>`).join('')}
+    <path class="lineP" d="${path}" pathLength="1"/>
+    ${pts.map((r, i) => `<circle style="--i:${i}" class="${r.value > 250 || r.value < 70 ? 'high' : ''}" cx="${x(i)}" cy="${y(r.value)}" r="4.5"><title>${fmtDay(r.date)}: ${r.value} mg/dL</title></circle>`).join('')}
     <text x="${x(0)}" y="${H - 4}" text-anchor="start">${fmtDay(pts[0].date)}</text><text x="${x(pts.length - 1)}" y="${H - 4}" text-anchor="end">${fmtDay(pts.at(-1).date)}</text>
   </svg></section>`;
 }
@@ -444,7 +500,7 @@ function callsTable(p) {
 function alertsPanel() {
   const list = data.alerts.filter(a => a.parentId === activeId).slice(0, 8);
   return `<section class="panel"><div class="panel-head"><h2>Alerts</h2><span class="muted">Sent to WhatsApp</span></div>
-  ${list.length ? `<ul class="alert-list">${list.map(a => `<li class="alert ${a.severity === 'urgent' ? 'urgent' : ''} ${a.acknowledged ? 'done' : ''}"><strong>${esc(a.title)}</strong><div class="alert-meta"><span>${ago(a.createdAt)} · to ${a.deliveries.map(d => esc(d.name)).join(', ')}</span>${a.acknowledged ? '<span>Handled</span>' : `<button class="ack" data-ack="${a.id}">Mark handled</button>`}</div></li>`).join('')}</ul>` : '<p class="empty">No alerts. That means every call went well.</p>'}</section>`;
+  ${list.length ? `<ul class="alert-list">${list.map(a => `<li class="alert ${a.severity === 'urgent' ? 'urgent' : ''} ${a.acknowledged ? 'done' : ''} ${freshAlerts.has(a.id) ? 'fresh' : ''}"><strong>${esc(a.title)}</strong><div class="alert-meta"><span>${ago(a.createdAt)} · to ${a.deliveries.map(d => esc(d.name)).join(', ')}</span>${a.acknowledged ? '<span>Handled</span>' : `<button class="ack" data-ack="${a.id}">Mark handled</button>`}</div></li>`).join('')}</ul>` : '<p class="empty">No alerts. That means every call went well.</p>'}</section>`;
 }
 
 function phonePanel(p) {
@@ -456,7 +512,7 @@ function phonePanel(p) {
     <div class="screen" id="screen" aria-live="polite"><div class="sys">Press the green button to start today's call.</div></div>
     <div class="keypad">${keys.map(([k, s]) => `<button data-key="${k}" class="${k === '9' ? 'sos' : ''}" disabled aria-label="Key ${k}${s ? ', ' + s : ''}">${k}<small>${s}</small></button>`).join('')}</div>
     <div class="phone-actions"><button class="call-btn" id="sim-start">Start call</button><button class="end-btn" id="sim-end" disabled>Hang up</button></div>
-    <div class="sim-extra"><label class="speak"><input type="checkbox" id="speak" style="width:16px;height:16px;min-height:0"> Play sound</label><button class="linkish" id="sim-noanswer">Pretend no one answers</button></div>
+    <div class="sim-extra"><label class="speak"><input type="checkbox" id="speak" style="width:16px;height:16px;min-height:0" checked> Play voice</label><button class="linkish" id="sim-noanswer">Pretend no one answers</button></div>
   </div></section>`;
 }
 
@@ -528,11 +584,17 @@ function render() {
   <div style="margin-top:24px">${settingsPanel(p)}</div>`;
   renderStudio();
   bind();
+  const app = $('#app');
+  const enter = animatedFor !== activeId && !FX.reduce;
+  animatedFor = activeId;
+  app.classList.toggle('enter', enter);
+  app.querySelectorAll('.panel').forEach((el, i) => { el.classList.add('spot'); el.style.setProperty('--d', `${Math.min(i, 8) * 70}ms`); });
+  if (enter) app.querySelectorAll('.stat b').forEach(b => FX.countUp(b));
 }
 
 // ── Events ───────────────────────────────────────────────
 function bind() {
-  document.querySelectorAll('[data-parent]').forEach(b => b.onclick = () => { activeId = b.dataset.parent; sim = { checkinId: null, render: null, entry: '' }; studio = { voiceId: null, creating: false, editing: false, confirmDelete: null, moreOpen: false }; stopPlayback(); render(); });
+  document.querySelectorAll('[data-parent]').forEach(b => b.onclick = () => { FX.sfx.tap(); activeId = b.dataset.parent; sim = { checkinId: null, render: null, entry: '' }; studio = { voiceId: null, creating: false, editing: false, confirmDelete: null, moreOpen: false }; stopPlayback(); render(); });
   document.querySelectorAll('[data-ack]').forEach(b => b.onclick = async () => { try { await api(`/alerts/${b.dataset.ack}/ack`, { method: 'POST' }); await load(); } catch (e) { toast(e.message); } });
   $('#letter-btn').onclick = async () => { try { const r = await api('/report'); $('#letter-body').textContent = r.text.replace(/\*/g, ''); $('#letter-dialog').showModal(); } catch (e) { toast(e.message); } };
   $('#letter-close').onclick = () => $('#letter-dialog').close();
@@ -569,15 +631,22 @@ function screenAdd(html, cls = 'line', lang) {
   const el = document.createElement('div');
   el.className = cls; if (lang) el.lang = lang; el.innerHTML = html;
   $('#screen').appendChild(el); $('#screen').scrollTop = 1e6;
+  return el;
 }
+const EQ = '<span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
 function showRender(r) {
   sim.render = r; sim.entry = '';
-  for (const s of r.segments) {
-    if (s.play && s.voice) screenAdd(`<span class="voice-tag">🎙 In ${esc(s.voice)}'s voice</span>${esc(s.say)}`, 'line voiced', s.lang);
-    else if (s.play) screenAdd('🎵 Playing your recorded message', 'sys');
-    else screenAdd(esc(s.say), 'line', s.lang);
-  }
-  if ($('#speak')?.checked) playSequence(r.segments);
+  const bubbles = r.segments.map(s => {
+    if (s.play && s.voice) return screenAdd(`<span class="voice-tag">🎙 In ${esc(s.voice)}'s voice ${EQ}</span>${esc(s.say)}`, 'line voiced', s.lang);
+    if (s.play) return screenAdd(`🎵 Playing your recorded message ${EQ}`, 'sys');
+    return screenAdd(esc(s.say), 'line', s.lang);
+  });
+  if ($('#speak')?.checked) playSequence(r.segments, (i) => {
+    bubbles.forEach(b => b.classList.remove('speaking'));
+    if (i >= 0) bubbles[i]?.classList.add('speaking');
+  });
+  $('.phone')?.classList.toggle('on-air', !r.hangup);
+  if (r.hangup && sim.checkinId) FX.sfx.hangup();
   const live = !r.hangup;
   document.querySelectorAll('[data-key]').forEach(b => b.disabled = !live);
   $('#sim-end').disabled = !live; $('#sim-start').disabled = live;
@@ -587,13 +656,27 @@ function showRender(r) {
 async function simStart() {
   stopPlayback();
   $('#screen').innerHTML = '';
-  screenAdd('Ringing… picked up', 'sys');
+  $('#sim-start').disabled = true;
+  const phone = $('.phone');
+  phone.classList.add('ringing');
+  $('#sim-status').textContent = 'Ringing…';
+  screenAdd(`📞 Calling ${esc(parent().addressAs || parent().name)}…`, 'sys');
+  FX.sfx.ring();
+  await new Promise(res => setTimeout(res, FX.reduce ? 300 : 1500));
+  phone.classList.remove('ringing');
+  if (!document.contains(phone)) return; // switched tabs while ringing
+  FX.sfx.pickup();
+  screenAdd('Picked up', 'sys');
   try { const r = await api('/simulate/start', { method: 'POST', body: JSON.stringify({ parentId: activeId }) }); sim.checkinId = r.checkinId; showRender(r.render); }
-  catch (e) { screenAdd(esc(e.message), 'sys'); }
+  catch (e) { screenAdd(esc(e.message), 'sys'); $('#sim-start').disabled = false; }
 }
 async function press(key) {
   if (!sim.render || sim.render.hangup) return;
+  FX.sfx.key(key);
+  const btn = document.querySelector(`[data-key="${CSS.escape(key)}"]`);
+  btn?.classList.add('hit'); setTimeout(() => btn?.classList.remove('hit'), 140);
   const g = sim.render.gather;
+  if (key === '9' && !g?.finishOnKey) { const ph = $('.phone'); ph.classList.remove('sos'); void ph.offsetWidth; ph.classList.add('sos'); }
   if (g?.finishOnKey) {
     if (key !== g.finishOnKey) { sim.entry += key; let el = $('#screen .entry:last-child'); if (!el) { screenAdd('', 'entry'); el = $('#screen .entry:last-child'); } el.textContent = sim.entry; return; }
     $('#screen .entry:last-child')?.remove();
@@ -685,7 +768,7 @@ function waveSvg(peaks = []) {
   const w = 168, h = 26, bw = w / Math.max(1, peaks.length);
   return `<svg class="wave" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">${peaks.map((p, i) => {
     const bh = Math.max(2, p * (h - 2));
-    return `<rect x="${(i * bw + bw * .2).toFixed(1)}" y="${((h - bh) / 2).toFixed(1)}" width="${(bw * .6).toFixed(1)}" height="${bh.toFixed(1)}" rx="1"/>`;
+    return `<rect style="--i:${i}" x="${(i * bw + bw * .2).toFixed(1)}" y="${((h - bh) / 2).toFixed(1)}" width="${(bw * .6).toFixed(1)}" height="${bh.toFixed(1)}" rx="1"/>`;
   }).join('')}</svg>`;
 }
 
@@ -769,7 +852,7 @@ function take(l, n, p) {
     : !l.clip ? '<span class="chip miss">Standard voice for now</span>'
     : l.clip.source === 'adapted' ? '<span class="chip ad">Adapted voice</span>'
     : '<span class="chip ok">Your voice</span>';
-  return `<li class="take ${state}" data-take="${esc(l.clipKey)}">
+  return `<li class="take ${state} ${studio.justSaved === l.clipKey ? 'just-saved' : ''}" data-take="${esc(l.clipKey)}">
     <span class="take-num">${l.clip ? '✓' : n}</span>
     <div style="min-width:0">
       <div class="take-label">${esc(l.label)} ${chip}</div>
@@ -852,6 +935,7 @@ async function useVoice(on) {
   try {
     await api(`/parents/${p.id}`, { method: 'PATCH', body: JSON.stringify({ voiceId: on ? v.id : null }) });
     toast(on ? `${whoOf(p)}'s calls will now be in ${v.speakerName}'s voice` : `${whoOf(p)}'s calls are back to the standard voice`);
+    if (on) { FX.sfx.success(); FX.confetti(innerWidth / 2, innerHeight / 2, 100); } else FX.sfx.tap();
     await load();
   } catch (ex) { toast(ex.message); renderStudio(); }
 }
@@ -942,6 +1026,7 @@ async function startRecording(key) {
   analyser.fftSize = 512;
   ctx.createMediaStreamSource(stream).connect(analyser);
   rec = { key, voiceId: studio.voiceId, stream, mr, chunks, ctx, li, startedAt: performance.now(), raf: 0 };
+  FX.sfx.recStart();
 
   li.classList.add('recording');
   const btn = li.querySelector('[data-rec]');
@@ -978,6 +1063,7 @@ async function stopRecording(save = true) {
   r.stream.getTracks().forEach(t => t.stop());
   r.ctx.close().catch(() => {});
   if (!save) return;
+  FX.sfx.recStop();
   r.li.classList.remove('recording');
   r.li.classList.add('saving');
   r.li.querySelector('.take-wave').innerHTML = '<span><span class="spinner"></span>Cleaning up and saving…</span>';
@@ -986,8 +1072,19 @@ async function stopRecording(save = true) {
     const res = await fetch(`/api/voices/${r.voiceId}/clips/${encodeURIComponent(r.key)}`, { method: 'PUT', headers: { 'Content-Type': 'audio/wav', 'x-family-key': KEY }, body: wav });
     const json = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(json.error || 'Could not save the recording');
+    const before = currentVoice()?.progress;
+    studio.justSaved = r.key;
     replaceVoice(json);
-    toast('Saved. Press ▶ to hear it.');
+    setTimeout(() => { studio.justSaved = null; }, 800);
+    const p = json.progress;
+    if (before && before.essentialDone < before.essential && p.essentialDone === p.essential) {
+      FX.sfx.success();
+      FX.confettiAt($('#studio .booth') || document.body, 140);
+      toast('All main lines recorded! 🎉 Switch it on for the calls.');
+    } else {
+      FX.sfx.saved();
+      toast('Saved. Press ▶ to hear it.');
+    }
   } catch (e) {
     toast(e.message);
     if (!rec) renderStudio();
@@ -1043,6 +1140,13 @@ async function toPhoneWav(blob) {
 }
 
 document.addEventListener('click', removeRow);
+document.addEventListener('keydown', (e) => {
+  if (!sim.render || sim.render.hangup || e.target.closest('input, textarea, select') || e.metaKey || e.ctrlKey) return;
+  if (/^[0-9*#]$/.test(e.key)) { e.preventDefault(); press(e.key); }
+});
+$('.top-right').append(FX.muteButton());
+FX.spotlight('.spot');
+FX.ripples('.btn, .tab');
 load();
 </script>
 </body>

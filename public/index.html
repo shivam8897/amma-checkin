@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Hind:wght@400;500;600&family=Hind+Guntur:wght@400;600&family=Hind+Madurai:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/fx.css">
+<script src="/fx.js"></script>
 <style>
 :root {
   --paper: #fff7f0; --paper-2: #ffeddf; --sheet: #ffffff; --ink: #1c1917; --ink-soft: #6b625b;
@@ -53,6 +55,20 @@ p { margin: 0; }
 .btn-haldi { background: var(--haldi); color: #fff; box-shadow: 0 10px 24px -12px rgba(234,88,12,.8); }
 .btn-ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
 
+/* Hero: drifting orange light behind it */
+main { position: relative; }
+.aurora { position: absolute; inset: 0 0 auto 0; height: 860px; overflow: hidden; pointer-events: none; z-index: 0; }
+.aurora i { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .5; animation: drift 18s ease-in-out infinite alternate; }
+.aurora i:nth-child(1) { width: 520px; height: 520px; background: #fdba74; top: -160px; right: -80px; }
+.aurora i:nth-child(2) { width: 420px; height: 420px; background: #fed7aa; top: 260px; left: -140px; animation-duration: 22s; animation-delay: -6s; }
+.aurora i:nth-child(3) { width: 300px; height: 300px; background: #ffedd5; top: 120px; left: 38%; animation-duration: 26s; animation-delay: -12s; }
+@keyframes drift { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(40px, 30px) scale(1.08); } 100% { transform: translate(-30px, 50px) scale(.95); } }
+.hero { position: relative; z-index: 1; }
+.rise .w { display: inline-block; opacity: 0; transform: translateY(.45em); animation: rise .8s cubic-bezier(.2,.7,.2,1) forwards; animation-delay: calc(var(--i) * 70ms + 100ms); }
+@keyframes rise { to { opacity: 1; transform: none; } }
+.hero h1 .accent { color: var(--haldi); }
+.btn { position: relative; overflow: hidden; }
+
 /* Hero */
 .hero { display: grid; grid-template-columns: 1.05fr .95fr; gap: 56px; align-items: center; padding: 48px 0 96px; }
 .hero h1 { max-width: 11ch; }
@@ -64,10 +80,19 @@ p { margin: 0; }
 /* The call transcript */
 .call { background: var(--sheet); border-radius: var(--radius-lg); padding: 22px; box-shadow: 0 1px 0 var(--line), 0 24px 48px -28px rgba(124,45,18,.4); position: relative; }
 .call-head { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px dashed var(--line); }
-.call-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--haldi); display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 1.2rem; color: #fff; }
+.call-avatar { position: relative; width: 44px; height: 44px; border-radius: 50%; background: var(--haldi); display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 1.2rem; color: #fff; }
 .call-who { line-height: 1.25; }
 .call-who strong { display: block; font-weight: 600; }
 .call-who span { font-size: .9rem; color: var(--ink-soft); }
+.call-avatar::before, .call-avatar::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--haldi); opacity: 0; }
+.call.ringing .call-avatar::before { animation: ringwave 1.4s ease-out infinite; }
+.call.ringing .call-avatar::after { animation: ringwave 1.4s ease-out .5s infinite; }
+@keyframes ringwave { from { transform: scale(1); opacity: .7; } to { transform: scale(2.1); opacity: 0; } }
+.call.ringing .call-avatar { animation: buzz .5s ease-in-out infinite; }
+@keyframes buzz { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
+.call-sound { border: 0; background: var(--haldi-wash); color: var(--haldi-deep); font: 600 .82rem/1 var(--body); padding: 7px 12px; border-radius: 999px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.call-sound:hover { filter: brightness(.97); }
+.call-foot { display: flex; justify-content: flex-end; padding-top: 10px; }
 .call-live { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: .9rem; color: var(--leaf); font-weight: 600; }
 .call-live i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse 1.6s infinite; }
 @keyframes pulse { 50% { opacity: .3; } }
@@ -77,10 +102,15 @@ p { margin: 0; }
 .bot p.te { font-family: 'Hind Guntur', var(--body); font-size: 1.05rem; line-height: 1.6; }
 .bot p.en { font-size: .88rem; color: var(--ink-soft); margin-top: 2px; }
 .key { justify-self: end; display: flex; align-items: center; gap: 10px; font-size: .92rem; color: var(--ink-soft); }
+.key.on b { animation: press .45s cubic-bezier(.3,1.6,.5,1); }
+@keyframes press { 0% { transform: scale(.6); background: var(--haldi); color: #fff; } 60% { transform: scale(1.12); background: var(--haldi); color: #fff; } }
+.whats { transform-origin: left bottom; }
+.turn.on .whats { animation: pop .5s cubic-bezier(.3,1.5,.5,1); }
+@keyframes pop { from { transform: scale(.85); } }
 .key b { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: var(--paper); color: var(--ink); font-size: 1.15rem; box-shadow: inset 0 -3px 0 var(--line); }
 .whats { margin-top: 4px; background: #e7f5e9; color: #183b23; border-radius: 12px 12px 12px 4px; padding: 10px 14px; font-size: .92rem; line-height: 1.45; }
 .whats small { display: block; opacity: .7; margin-top: 4px; }
-@media (prefers-reduced-motion: reduce) { .turn { opacity: 1; transform: none; transition: none; } .call-live i { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .turn { opacity: 1; transform: none; transition: none; } .call-live i, .aurora i, .call-avatar, .call-avatar::before, .call-avatar::after, .key.on b, .turn.on .whats { animation: none !important; } .rise .w { opacity: 1; transform: none; animation: none; } }
 
 /* Sections */
 section { padding: 88px 0; }
@@ -107,6 +137,7 @@ section { padding: 88px 0; }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
 @media (max-width: 900px) { .pair { grid-template-columns: 1fr; } }
 .alerts { display: grid; gap: 14px; }
+.wa { transition: transform .2s; } .wa:hover { transform: translateX(4px); }
 .wa { background: var(--sheet); border-radius: 14px 14px 14px 4px; padding: 14px 16px; box-shadow: 0 1px 0 var(--line); max-width: 420px; }
 .wa.urgent { border-left: 4px solid var(--postmark); }
 .wa strong { display: block; }
@@ -200,12 +231,13 @@ footer .row { display: flex; flex-wrap: wrap; gap: 24px; justify-content: space-
 </header>
 
 <main id="top">
+  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
   <div class="wrap hero">
     <div>
-      <h1>Every morning, someone calls Amma.</h1>
+      <h1 class="rise" aria-label="Every morning, someone calls Amma.">Every morning, someone calls <span class="accent">Amma.</span></h1>
       <p class="lede">A warm phone call to your parents each day, in Telugu, Hindi, Tamil or English. Did they take their tablets? How are they feeling? If anything is wrong, you know on WhatsApp within seconds.</p>
       <div class="hero-actions">
-        <a class="btn btn-haldi" href="#start">Start a free 7-day trial</a>
+        <a class="btn btn-haldi shine" href="#start">Start a free 7-day trial</a>
         <a class="btn btn-ghost" href="#how">Hear how a call goes</a>
       </div>
       <p class="hero-note">Works on any phone, even a basic keypad one. Nothing for your parents to install.</p>
@@ -215,7 +247,7 @@ footer .row { display: flex; flex-wrap: wrap; gap: 24px; justify-content: space-
       <div class="call-head">
         <div class="call-avatar" aria-hidden="true">ల</div>
         <div class="call-who"><strong>Calling Lakshmi garu</strong><span>Hyderabad, 8:30 am</span></div>
-        <div class="call-live"><i aria-hidden="true"></i>On call</div>
+        <div class="call-live" id="call-live"><i aria-hidden="true"></i><span>On call</span></div>
       </div>
       <ol class="turns" id="turns">
         <li class="turn bot"><p class="te" lang="te">నమస్కారం లక్ష్మి గారు. మీ యోగక్షేమాలు తెలుసుకోవడానికి రవి ఈ కాల్ ఏర్పాటు చేశారు.</p><p class="en">Namaskaram Lakshmi garu. Ravi set up this call to check on you.</p></li>
@@ -225,6 +257,7 @@ footer .row { display: flex; flex-wrap: wrap; gap: 24px; justify-content: space-
         <li class="turn key">Amma pressed <b>3</b></li>
         <li class="turn"><div class="whats"><strong>Lakshmi said she is not feeling well</strong>A quick call from you would mean a lot.<small>WhatsApp to Ravi in San Jose, 8:32 am</small></div></li>
       </ol>
+      <div class="call-foot"><button class="call-sound" id="call-sound" type="button">🔊 Replay with sound</button></div>
     </div>
   </div>
 
@@ -367,7 +400,7 @@ footer .row { display: flex; flex-wrap: wrap; gap: 24px; justify-content: space-
     <div class="wrap faq">
       <div class="sec-head"><h2>Questions families ask</h2></div>
       <details><summary>Will my parents find it confusing?</summary><p>They only answer and press one number. Every question says which number to press, and if they don't press anything we ask once more, then move on.</p></details>
-      <details><summary>Does it speak like a robot?</summary><p>The voice speaks naturally in their language and calls them by the name you choose, like "Lakshmi garu" or "Amma".</p></details>
+      <details><summary>Does it speak like a robot?</summary><p>The voice speaks naturally in their language and calls them by the name you choose, like "Lakshmi garu" or "Amma". Even better: record the questions in your own voice from the dashboard, and Amma hears <em>you</em> asking about her tablets every morning.</p></details>
       <details><summary>What if they don't pick up?</summary><p>We wait 15 minutes and call again. If they still don't answer, you and your emergency contact get a WhatsApp alert.</p></details>
       <details><summary>Is this a medical or emergency service?</summary><p>No. Amma Check-in is a daily reminder and check-in. In an emergency, call 112 in India. Always follow your parents' doctor's advice.</p></details>
       <details><summary>Who can see the information?</summary><p>Only the family members you add. We never sell data, and you can delete everything from your dashboard at any time.</p></details>
@@ -438,14 +471,67 @@ footer .row { display: flex; flex-wrap: wrap; gap: 24px; justify-content: space-
 </footer>
 
 <script>
-// Hero: play the call once, line by line.
+// Hero: the call plays line by line, rings first, and loops. With sound only when asked.
 (() => {
+  const card = document.querySelector('.call');
   const turns = [...document.querySelectorAll('#turns .turn')];
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduce) return turns.forEach(t => t.classList.add('on'));
-  const delays = [300, 1700, 3000, 3900, 5300, 6400];
-  turns.forEach((t, i) => setTimeout(() => t.classList.add('on'), delays[i]));
+  const live = document.querySelector('#call-live span');
+  const reduce = FX.reduce;
+  if (reduce) { turns.forEach(t => t.classList.add('on')); document.getElementById('call-sound').hidden = true; return; }
+  FX.tilt(card, 5);
+  let timers = [];
+  const later = (ms, fn) => timers.push(setTimeout(fn, ms));
+  function play(withSound) {
+    timers.forEach(clearTimeout); timers = [];
+    turns.forEach(t => t.classList.remove('on'));
+    card.classList.add('ringing'); live.textContent = 'Ringing…';
+    if (withSound) { FX.sfx.ring(); later(1500, FX.sfx.ring); }
+    const start = withSound ? 3000 : 1600;
+    later(start, () => { card.classList.remove('ringing'); live.textContent = 'On call'; if (withSound) FX.sfx.pickup(); });
+    const delays = [300, 1700, 3000, 3900, 5300, 6400];
+    turns.forEach((t, i) => later(start + delays[i], () => {
+      t.classList.add('on');
+      if (!withSound) return;
+      const key = t.querySelector('b')?.textContent;
+      if (key) FX.sfx.key(key);
+      if (t.querySelector('.whats')) FX.sfx.ding();
+    }));
+    later(start + 6400 + 6000, () => play(false)); // loop quietly
+  }
+  play(false);
+  document.getElementById('call-sound').addEventListener('click', () => { if (FX.isMuted()) FX.setMuted(false); play(true); });
 })();
+
+// Headline words rise in, one after another.
+(() => {
+  const h1 = document.querySelector('h1.rise');
+  if (FX.reduce) return;
+  let i = 0;
+  const wrap = (node) => {
+    for (const n of [...node.childNodes]) {
+      if (n.nodeType === 3) {
+        const frag = document.createDocumentFragment();
+        n.textContent.split(/(\s+)/).forEach(part => {
+          if (!part.trim()) return frag.append(part);
+          const w = document.createElement('span'); w.className = 'w'; w.style.setProperty('--i', i++); w.textContent = part; w.setAttribute('aria-hidden', 'true'); frag.append(w);
+        });
+        n.replaceWith(frag);
+      } else wrap(n);
+    }
+  };
+  wrap(h1);
+})();
+
+// Sections slide in as you scroll; cards light up under the cursor.
+document.querySelectorAll('.sec-head, .letter, .form, .success').forEach(el => el.setAttribute('data-reveal', ''));
+for (const group of ['.why > *', '.steps > li', '.alerts > .wa', '.extras > *', '.plans > .plan', '.faq details']) {
+  document.querySelectorAll(group).forEach((el, i) => { el.setAttribute('data-reveal', ''); el.style.setProperty('--d', `${Math.min(i, 6) * 90}ms`); });
+}
+FX.reveal();
+document.querySelectorAll('.plan, .wa').forEach(el => el.classList.add('spot'));
+FX.spotlight('.spot');
+FX.ripples('.btn');
+document.querySelector('.nav-links').append(FX.muteButton());
 
 // Pricing currency toggle
 let currency = 'inr';
@@ -482,6 +568,8 @@ form.addEventListener('submit', async (e) => {
     if (!res.ok) throw new Error(data.error || 'Sign-up failed. Check the details and try again.');
     document.getElementById('signup-area').hidden = true;
     document.getElementById('success').classList.add('on');
+    FX.sfx.success();
+    FX.confettiAt(document.getElementById('success'), 120);
     document.getElementById('dash-link').href = data.dashboardUrl;
     document.getElementById('success-text').textContent = `${body.parent.addressAs}'s first call goes out at ${body.parent.callTime} tomorrow. Bookmark your dashboard link: it's your private key.`;
     if (data.paymentLink) { const p = document.getElementById('pay-link'); p.href = data.paymentLink; p.hidden = false; }

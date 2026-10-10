@@ -1,0 +1,40 @@
+/* Shared motion styles (see fx.js). Everything here turns off under prefers-reduced-motion. */
+
+/* Scroll reveal: only hidden once fx.js has loaded, so the page never stays blank. */
+.fx [data-reveal] { opacity: 0; transform: translateY(22px); transition: opacity .7s cubic-bezier(.2,.7,.2,1) var(--d, 0ms), transform .7s cubic-bezier(.2,.7,.2,1) var(--d, 0ms); }
+.fx [data-reveal].in { opacity: 1; transform: none; }
+
+/* Cursor spotlight on cards */
+.spot { position: relative; isolation: isolate; }
+.spot::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1; opacity: 0; transition: opacity .3s;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(234,88,12,.075), transparent 60%); }
+.spot:hover::after { opacity: 1; }
+
+/* Button ink ripple */
+.fx-ripple { position: absolute; border-radius: 50%; background: currentColor; opacity: .22; transform: scale(0); pointer-events: none; animation: fx-ripple .6s ease-out forwards; }
+@keyframes fx-ripple { to { transform: scale(1); opacity: 0; } }
+
+/* Shine sweep across the main call-to-action */
+.shine { position: relative; overflow: hidden; }
+.shine::before { content: ''; position: absolute; inset: 0; width: 40%; transform: translateX(-160%) skewX(-20deg); background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent); animation: fx-shine 4.5s ease-in-out 1.5s infinite; pointer-events: none; }
+@keyframes fx-shine { 0%, 70% { transform: translateX(-160%) skewX(-20deg); } 100% { transform: translateX(360%) skewX(-20deg); } }
+
+/* Confetti layer */
+.fx-confetti { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 50; }
+
+/* Sound on/off */
+.fx-mute { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: var(--sheet); color: var(--ink-soft); display: grid; place-items: center; cursor: pointer; transition: color .2s, transform .15s; flex: none; padding: 0; }
+.fx-mute:hover { color: var(--haldi-deep); transform: scale(1.06); }
+.fx-mute[aria-pressed="true"] { color: var(--haldi-deep); }
+.fx-mute svg { width: 18px; height: 18px; }
+
+/* Little "speaking" equaliser */
+.eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; vertical-align: -1px; }
+.eq i { width: 3px; height: 100%; border-radius: 2px; background: currentColor; transform-origin: bottom; animation: fx-eq .9s ease-in-out infinite; }
+.eq i:nth-child(2) { animation-delay: -.3s; } .eq i:nth-child(3) { animation-delay: -.6s; } .eq i:nth-child(4) { animation-delay: -.15s; }
+@keyframes fx-eq { 0%, 100% { transform: scaleY(.3); } 50% { transform: scaleY(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .fx [data-reveal] { opacity: 1; transform: none; transition: none; }
+  .shine::before, .eq i { animation: none; }
+}
