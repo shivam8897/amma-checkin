@@ -16,10 +16,10 @@ async function main() {
   }
 
   const family = db.families.insert({
-    id: db.id('fam'), accessKey: KEY, childName: 'Ravi', email: 'ravi@example.com',
+    id: db.id('fam'), accessKey: KEY, childName: 'Shivam', email: 'shivam@example.com',
     plan: 'couple', currency: 'usd', status: 'active', timezone: TZ,
     contacts: [
-      { name: 'Ravi', phone: '+14155550101', relation: 'Son', role: 'family' },
+      { name: 'Shivam', phone: '+14155550101', relation: 'Son', role: 'family' },
       { name: 'Priya', phone: '+919900000002', relation: 'Daughter', role: 'family' },
       { name: 'Suresh uncle', phone: '+919900000003', relation: 'Neighbour', role: 'emergency' },
     ],

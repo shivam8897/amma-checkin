@@ -19,7 +19,7 @@ const PLANS = {
 };
 
 // How each language's call begins, for the language picker.
-const SAMPLES = Object.fromEntries(Object.keys(LANGUAGES).map((k) => [k, line(k, 'greeting', { name: 'Amma', child: 'Ravi' })]));
+const SAMPLES = Object.fromEntries(Object.keys(LANGUAGES).map((k) => [k, line(k, 'greeting', { name: 'Amma', child: 'Shivam' })]));
 
 const PHONE = /^\+\d{8,15}$/;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;

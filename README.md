@@ -96,7 +96,7 @@ See the [Roadmap](#13-roadmap-what-to-add-next): voice answers ("I'm fine"), hum
  Place call ──► no answer / busy / voicemail ──► wait 15 min, retry
    │                                              └─► still no answer → 📵 NO_ANSWER alert
    ▼ parent picks up
- Greeting ("Namaskaram Lakshmi garu… Ravi asked us to check on you")
+ Greeting ("Namaskaram Lakshmi garu… Shivam asked us to check on you")
  "Press 9 anytime to ask your family to call you"
    │
    ├─ [first call only] Consent ─ 0 → stop calls, ✋ alert
@@ -104,7 +104,7 @@ See the [Roadmap](#13-roadmap-what-to-add-next): voice answers ("I'm fine"), hum
    ├─ Meal: "Had your breakfast/dinner?"  1 yes / 2 no → 🍚 alert
    ├─ Mood: 1 good / 2 okay / 3 not well → 🤒 alert
    ├─ [optional] Sugar reading + # → out of range → 🩸 alert
-   ├─ [if set] "Ravi has sent you a message…" (read once)
+   ├─ [if set] "Shivam has sent you a message…" (read once)
    └─ Goodbye
  At any single-key question: 9 → 🆘 SOS alert, call ends kindly
  Silence → repeat once → move on (recorded as "no response")
@@ -165,7 +165,7 @@ Scroll to **"Calls in your own voice"** on the dashboard:
 3. Listen back, then switch on **"Use on Amma's calls"**. Try the call on the phone simulator.
 
 How it plays on a real call:
-- A short standard-voice intro comes first ("…recorded for you by Ravi"), so the parent knows it's a recording, not a live call.
+- A short standard-voice intro comes first ("…recorded for you by Shivam"), so the parent knows it's a recording, not a live call.
 - Each line plays your recording if there is one; otherwise the standard voice. Renaming a medicine stops its old recording from playing (the studio asks you to record it again).
 - **Optional voice adaptation:** set `ELEVENLABS_API_KEY` (for Telugu, Marathi, Malayalam or Bangla, set `ELEVENLABS_MODEL` to a model that supports them, such as `eleven_v3`) and press **"Adapt my voice"** (needs 3+ recorded lines). Your recordings teach the voice, which then speaks the lines you skipped, new medicines and your typed messages in your voice. Without a key, everything else still works.
 - Clips live in `data/audio/` under random 128-bit file names (Twilio fetches them without a login). Deleting a voice deletes its files and the adapted voice at the provider.
@@ -398,7 +398,7 @@ Keep calls short (about 60 seconds) and your margin stays healthy.
 - [ ] WhatsApp sandbox working for alerts
 - [ ] Test on your own parents for real (with their permission!)
 - [ ] Deploy (Railway/Render), payment links in `.env`
-- [ ] Record a 60-second demo video: Amma's call + Ravi's WhatsApp
+- [ ] Record a 60-second demo video: Amma's call + Shivam's WhatsApp
 
 **Monday**
 - [ ] Post in family/NRI groups, aim for 10 paying families this week
