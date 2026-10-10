@@ -7,9 +7,10 @@
 <meta name="description" content="A warm phone call to your parents every morning, in their language. If something is wrong, you hear on WhatsApp right away.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Hind:wght@400;500;600&family=Hind+Guntur:wght@400;600&family=Hind+Madurai:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Hind:wght@400;500;600&family=Hind+Guntur:wght@400;600&family=Hind+Madurai:wght@400;600&family=Hind+Siliguri:wght@400;600&family=Noto+Sans+Malayalam:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/fx.css">
 <script src="/fx.js"></script>
+<script src="/langpicker.js"></script>
 <style>
 :root {
   --paper: #fff7f0; --paper-2: #ffeddf; --sheet: #ffffff; --ink: #1c1917; --ink-soft: #6b625b;
@@ -30,6 +31,10 @@ img, svg { display: block; }
 :focus-visible { outline: 3px solid var(--haldi); outline-offset: 3px; border-radius: 4px; }
 .wrap { width: min(1120px, 100% - 32px); margin-inline: auto; }
 
+[lang="te"] { font-family: 'Hind Guntur', var(--body); }
+[lang="ta"] { font-family: 'Hind Madurai', var(--body); }
+[lang="bn"] { font-family: 'Hind Siliguri', var(--body); }
+[lang="ml"] { font-family: 'Noto Sans Malayalam', var(--body); }
 h1, h2, h3 { font-family: var(--display); font-weight: 800; line-height: 1.08; margin: 0; letter-spacing: -.03em; }
 h1 { font-size: clamp(2.6rem, 6.4vw, 4.6rem); }
 h2 { font-size: clamp(2rem, 4.2vw, 3rem); }
@@ -196,7 +201,7 @@ section { padding: 88px 0; }
 .form legend { font-family: var(--display); font-size: 1.4rem; margin-bottom: 4px; padding: 0; }
 .field { display: grid; gap: 6px; }
 .field.full { grid-column: 1 / -1; }
-.field label { font-weight: 600; font-size: .95rem; }
+.field label, .field .lbl { font-weight: 600; font-size: .95rem; }
 .field .hint { font-size: .85rem; color: var(--ink-soft); }
 .field input, .field select { font: inherit; color: var(--ink); background: var(--paper); border: 1.5px solid transparent; border-radius: 10px; padding: 11px 14px; min-height: 48px; width: 100%; }
 .field input:focus, .field select:focus { outline: none; border-color: var(--haldi); background: var(--sheet); }
@@ -235,7 +240,7 @@ footer .row { display: flex; flex-wrap: wrap; gap: 24px; justify-content: space-
   <div class="wrap hero">
     <div>
       <h1 class="rise" aria-label="Every morning, someone calls Amma.">Every morning, someone calls <span class="accent">Amma.</span></h1>
-      <p class="lede">A warm phone call to your parents each day, in Telugu, Hindi, Tamil or English. Did they take their tablets? How are they feeling? If anything is wrong, you know on WhatsApp within seconds.</p>
+      <p class="lede">A warm phone call to your parents each day, in their own language: Telugu, Hindi, Tamil, Marathi, Malayalam, Bangla or English. Did they take their tablets? How are they feeling? If anything is wrong, you know on WhatsApp within seconds.</p>
       <div class="hero-actions">
         <a class="btn btn-haldi shine" href="#start">Start a free 7-day trial</a>
         <a class="btn btn-ghost" href="#how">Hear how a call goes</a>
@@ -276,7 +281,7 @@ footer .row { display: flex; flex-wrap: wrap; gap: 24px; justify-content: space-
         <div>
           <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M8 10h22v16H18l-6 6v-6H8z"/><path d="M30 18h10v14h-4v5l-5-5h-9v-6"/></svg>
           <h3>Their own language</h3>
-          <p>Every call speaks to them the way family does, by the name they like, in Telugu, Hindi, Tamil or English.</p>
+          <p>Every call speaks to them the way family does, by the name they like, in Telugu, Hindi, Tamil, Marathi, Malayalam, Bangla or English.</p>
         </div>
         <div>
           <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M24 6c8 0 14 6 14 14 0 10-14 22-14 22S10 30 10 20c0-8 6-14 14-14z"/><path d="M18 21l4 4 8-8"/></svg>
@@ -425,8 +430,7 @@ footer .row { display: flex; flex-wrap: wrap; gap: 24px; justify-content: space-
                 <div class="field"><label for="pName">Their name</label><input id="pName" name="pName" required placeholder="Lakshmi"></div>
                 <div class="field"><label for="pAddress">What should the call call them?</label><input id="pAddress" name="pAddress" placeholder="Lakshmi garu"><span class="hint">Amma, Aunty, Lakshmi garu… whatever feels warm.</span></div>
                 <div class="field"><label for="pPhone">Their phone number</label><input id="pPhone" name="pPhone" type="tel" required placeholder="+919900000000"></div>
-                <div class="field"><label for="pLang">Language</label>
-                  <select id="pLang" name="pLang"><option value="te">తెలుగు, Telugu</option><option value="hi">हिन्दी, Hindi</option><option value="ta">தமிழ், Tamil</option><option value="en">English</option></select></div>
+                <div class="field full"><span class="lbl">Language of the call</span><div id="lang-pick"></div><span class="hint">The language Amma or Nanna is most at home in.</span></div>
                 <div class="field"><label for="pTime">Call time (India)</label><input id="pTime" name="pTime" type="time" value="08:30"></div>
                 <div class="field"><label for="pMeds">Medicines to ask about</label><input id="pMeds" name="pMeds" placeholder="Metformin, BP tablet"><span class="hint">Separate with commas. Add evening tablets later.</span></div>
                 <label class="check"><input type="checkbox" id="pSugar" name="pSugar"> Also ask for their sugar reading</label>
@@ -532,6 +536,10 @@ document.querySelectorAll('.plan, .wa').forEach(el => el.classList.add('spot'));
 FX.spotlight('.spot');
 FX.ripples('.btn');
 document.querySelector('.nav-links').append(FX.muteButton());
+
+// Language picker in the sign-up form, with live samples from the server.
+document.getElementById('lang-pick').innerHTML = LangPicker.html({ name: 'pLang', value: 'te', id: 'signup' });
+fetch('/api/config').then(r => r.json()).then(c => LangPicker.setSamples(c.samples)).catch(() => {});
 
 // Pricing currency toggle
 let currency = 'inr';

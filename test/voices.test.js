@@ -217,3 +217,29 @@ test('API: create a voice, upload a line, play it back, choose it, delete it', a
     server.close();
   }
 });
+
+// ── Languages ─────────────────────────────────────────────
+test('every language has every line, a phone voice, and family-voice lines', () => {
+  const { SCRIPTS, PERSONAL, LANGUAGES, voiceFor } = require('../src/engine/scripts');
+  assert.deepEqual(Object.keys(LANGUAGES).sort(), ['bn', 'en', 'hi', 'ml', 'mr', 'ta', 'te']);
+  for (const lang of Object.keys(LANGUAGES)) {
+    for (const key of Object.keys(SCRIPTS.en)) assert.ok(SCRIPTS[lang][key], `${lang} is missing "${key}"`);
+    for (const key of Object.keys(PERSONAL.en)) assert.ok(PERSONAL[lang][key], `${lang} family voice is missing "${key}"`);
+    assert.match(voiceFor(lang).language, new RegExp(`^${lang}-IN$`));
+    // Placeholders must match English, or names/medicines would go missing from the call.
+    for (const [pack, key] of [[SCRIPTS, 'med'], [SCRIPTS, 'medNo'], [SCRIPTS, 'recordedIntro'], [PERSONAL, 'med'], [PERSONAL, 'greeting']]) {
+      const vars = (t) => (t.match(/\{\w+\}/g) || []).sort().join();
+      assert.equal(vars(pack[lang][key]), vars(pack.en[key]), `${lang}.${key} placeholders`);
+    }
+  }
+});
+
+test('a Malayalam call runs end to end in Malayalam', async () => {
+  db.parents.update(parent.id, { language: 'ml', askMeal: true });
+  const c = calls.findOrCreateCheckin(db.parents.get(parent.id), 'morning');
+  let r = engine.start(c.id);
+  assert.match(r.segments[0].say, /നമസ്കാരം Lakshmi garu/);
+  r = await engine.answer(c.id, r.step, '1');
+  assert.match(r.segments.at(-1).say, /പ്രാതൽ/);
+  assert.match(voiceProvider.toTwiml(r, c.id), /language="ml-IN"/);
+});

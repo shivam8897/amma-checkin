@@ -6,9 +6,10 @@
 <title>Family Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Hind:wght@400;500;600&family=Hind+Guntur:wght@400;600&family=Hind+Madurai:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Hind:wght@400;500;600&family=Hind+Guntur:wght@400;600&family=Hind+Madurai:wght@400;600&family=Hind+Siliguri:wght@400;600&family=Noto+Sans+Malayalam:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/fx.css">
 <script src="/fx.js"></script>
+<script src="/langpicker.js"></script>
 <style>
 :root {
   --paper: #fff7f0; --paper-2: #ffeddf; --sheet: #ffffff; --ink: #1c1917; --ink-soft: #6b625b;
@@ -28,6 +29,8 @@ h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -.02
 p { margin: 0; }
 [lang="te"] { font-family: 'Hind Guntur', var(--body); }
 [lang="ta"] { font-family: 'Hind Madurai', var(--body); }
+[lang="bn"] { font-family: 'Hind Siliguri', var(--body); }
+[lang="ml"] { font-family: 'Noto Sans Malayalam', var(--body); }
 .wrap { width: min(1180px, 100% - 32px); margin-inline: auto; }
 .muted { color: var(--ink-soft); }
 
@@ -369,8 +372,8 @@ const params = new URLSearchParams(location.search);
 const KEY = params.get('key') || 'demo';
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const LANGS = { te: 'తెలుగు, Telugu', hi: 'हिन्दी, Hindi', ta: 'தமிழ், Tamil', en: 'English' };
-const SPEECH = { te: 'te-IN', hi: 'hi-IN', ta: 'ta-IN', en: 'en-IN' };
+const LANGS = Object.fromEntries(LangPicker.LANGS.map(([k, native, en]) => [k, k === 'en' ? 'English' : `${native}, ${en}`]));
+const SPEECH = Object.fromEntries(Object.keys(LANGS).map(k => [k, `${k}-IN`]));
 
 let data = null, offline = false, activeId = null;
 let animatedFor = null;        // play the entrance animation once per parent tab
@@ -526,7 +529,7 @@ function settingsPanel(p) {
       <div class="field"><label for="f-name">Name</label><input id="f-name" name="name" value="${esc(p.name)}"></div>
       <div class="field"><label for="f-addr">The call calls them</label><input id="f-addr" name="addressAs" value="${esc(p.addressAs)}"></div>
       <div class="field"><label for="f-phone">Phone</label><input id="f-phone" name="phone" type="tel" value="${esc(p.phone)}"></div>
-      <div class="field"><label for="f-lang">Language</label><select id="f-lang" name="language">${Object.entries(LANGS).map(([k, v]) => `<option value="${k}" ${k === p.language ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+      <div class="field full"><span class="lbl">Language of the call</span>${LangPicker.html({ name: 'language', value: p.language, id: 'settings' })}</div>
       <div class="field"><label for="f-time">Morning call</label><input id="f-time" name="callTime" type="time" value="${morning}"></div>
       <div class="field"><label for="f-eve">Evening call</label><input id="f-eve" name="eveningTime" type="time" value="${evening}"><span class="hint">Only if a medicine is set to evening.</span></div>
       <div class="field full"><span class="lbl">Medicines</span>
@@ -584,6 +587,7 @@ function render() {
   <div style="margin-top:24px">${settingsPanel(p)}</div>`;
   renderStudio();
   bind();
+  LangPicker.setSamples(data.samples);
   const app = $('#app');
   const enter = animatedFor !== activeId && !FX.reduce;
   animatedFor = activeId;

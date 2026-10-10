@@ -2,7 +2,7 @@
 
 **Every morning, someone calls Amma.**
 
-A warm, automated phone call to elderly parents every day, in their own language (Telugu, Hindi, Tamil or English). It asks whether they took their medicines and how they feel. If anything is wrong, their children get a WhatsApp alert within seconds, plus a short report every Sunday.
+A warm, automated phone call to elderly parents every day, in their own language (Telugu, Hindi, Tamil, Marathi, Malayalam, Bangla or English). It asks whether they took their medicines and how they feel. If anything is wrong, their children get a WhatsApp alert within seconds, plus a short report every Sunday.
 
 > Not a medical or emergency service. In an emergency in India, dial 112.
 
@@ -47,7 +47,7 @@ Most elder-care products are **apps**, and most elderly parents **don't use apps
 ### ✅ Built in this MVP
 
 **For parents (the call)**
-- Daily call at a chosen time, in **Telugu, Hindi, Tamil or English**
+- Daily call at a chosen time, in **Telugu, Hindi, Tamil, Marathi, Malayalam, Bangla or English**, chosen with a picker that shows each language in its own script and a sample of how the call begins
 - Addresses them the way family does ("Lakshmi garu", "Amma", "Aunty")
 - **Consent on the first call**: press 1 to agree, 0 to stop calls forever
 - **One question per medicine**: press 1 for yes, 2 for no; gentle reminder if no
@@ -154,7 +154,7 @@ npm start         # http://localhost:3000
 
 In demo mode (no Twilio keys), no real calls are made. Use **"Try the call"** in the dashboard: press the green button and answer with the keypad as Amma would. Alerts print in the server console (that's where WhatsApp messages would go) and appear on the dashboard.
 
-Tip: tick **"Play sound"** in the simulator to hear the call: recorded family-voice lines play as audio, the rest use your browser's voice. Telugu/Tamil browser voices depend on your device.
+Tip: tick **"Play sound"** in the simulator to hear the call: recorded family-voice lines play as audio, the rest use your browser's voice. Browser voices for Indian languages depend on your device (real calls use proper phone voices).
 
 ### Family voices
 
@@ -167,7 +167,7 @@ Scroll to **"Calls in your own voice"** on the dashboard:
 How it plays on a real call:
 - A short standard-voice intro comes first ("…recorded for you by Ravi"), so the parent knows it's a recording, not a live call.
 - Each line plays your recording if there is one; otherwise the standard voice. Renaming a medicine stops its old recording from playing (the studio asks you to record it again).
-- **Optional voice adaptation:** set `ELEVENLABS_API_KEY` and press **"Adapt my voice"** (needs 3+ recorded lines). Your recordings teach the voice, which then speaks the lines you skipped, new medicines and your typed messages in your voice. Without a key, everything else still works.
+- **Optional voice adaptation:** set `ELEVENLABS_API_KEY` (for Telugu, Marathi, Malayalam or Bangla, set `ELEVENLABS_MODEL` to a model that supports them, such as `eleven_v3`) and press **"Adapt my voice"** (needs 3+ recorded lines). Your recordings teach the voice, which then speaks the lines you skipped, new medicines and your typed messages in your voice. Without a key, everything else still works.
 - Clips live in `data/audio/` under random 128-bit file names (Twilio fetches them without a login). Deleting a voice deletes its files and the adapted voice at the provider.
 
 Recording needs a secure page: `localhost` or `https://`.
@@ -260,7 +260,7 @@ amma-checkin/
 │   ├── db.js               Tiny JSON database (swap for Postgres later)
 │   ├── engine/
 │   │   ├── callFlow.js     ❤️ The call logic: steps, answers, SOS, retries
-│   │   └── scripts.js      Every spoken line, in 4 languages (+ first-person lines for family voices)
+│   │   └── scripts.js      Every spoken line, in 7 languages (+ first-person lines for family voices)
 │   ├── providers/
 │   │   ├── voice.js        Twilio calls, TwiML, signature check
 │   │   ├── whatsapp.js     Twilio / Meta / console WhatsApp
@@ -411,7 +411,7 @@ Keep calls short (about 60 seconds) and your margin stays healthy.
 **Better calls**
 - Speak instead of press: "I'm fine", "not well" (speech recognition in Indian languages)
 - ~~Human-recorded voice lines, or a familiar voice cloned *with consent*~~ ✅ Built: [Family voices](#family-voices)
-- More languages: Kannada, Malayalam, Marathi, Bengali, Gujarati, Punjabi, Odia
+- More languages: Kannada, Gujarati, Punjabi, Odia (Marathi, Malayalam and Bangla are done)
 - BP readings (two numbers), weight, water intake, short walk reminders
 - A friendly 2-minute chat option for loneliness ("Tell me about your day")
 

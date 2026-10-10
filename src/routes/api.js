@@ -8,7 +8,7 @@ const reports = require('../services/reports');
 const scheduler = require('../services/scheduler');
 const voices = require('../services/voices');
 const voiceClone = require('../providers/voiceClone');
-const { LANGUAGES } = require('../engine/scripts');
+const { LANGUAGES, line } = require('../engine/scripts');
 
 const router = express.Router();
 
@@ -17,6 +17,9 @@ const PLANS = {
   couple: { name: 'Both parents', inr: 799, usd: 19 },
   care:   { name: 'Care+ (morning & evening)', inr: 999, usd: 24 },
 };
+
+// How each language's call begins, for the language picker.
+const SAMPLES = Object.fromEntries(Object.keys(LANGUAGES).map((k) => [k, line(k, 'greeting', { name: 'Amma', child: 'Ravi' })]));
 
 const PHONE = /^\+\d{8,15}$/;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -82,7 +85,7 @@ function makeParent(familyId, p) {
 
 // ── Public ────────────────────────────────────────────────
 router.get('/config', (req, res) => {
-  res.json({ demoMode: config.demoMode, voiceAdaptation: voiceClone.enabled(), languages: LANGUAGES, plans: PLANS });
+  res.json({ demoMode: config.demoMode, voiceAdaptation: voiceClone.enabled(), languages: LANGUAGES, samples: SAMPLES, plans: PLANS });
 });
 
 router.post('/signup', (req, res) => {
@@ -136,6 +139,8 @@ router.get('/family', requireFamily, (req, res) => {
   res.json({
     demoMode: config.demoMode,
     voiceAdaptation: voiceClone.enabled(),
+    languages: LANGUAGES,
+    samples: SAMPLES,
     family: safeFamily,
     plan: PLANS[family.plan],
     parents: parents.map((p) => ({
