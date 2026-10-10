@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Family Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Hind:wght@400;500;600&family=Hind+Guntur:wght@400;600&family=Hind+Madurai:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #fff7f0; --paper-2: #ffeddf; --sheet: #ffffff; --ink: #1c1917; --ink-soft: #6b625b;
+  --haldi: #ea580c; --haldi-deep: #c2410c; --haldi-wash: #fff0e4; --postmark: #d6342c; --postmark-wash: #fde8e6;
+  --leaf: #15803d; --leaf-wash: #e3f6e8; --line: rgba(28,25,23,.1);
+  --display: 'Plus Jakarta Sans', 'Hind', system-ui, sans-serif; --body: 'Plus Jakarta Sans', 'Hind', 'Hind Guntur', 'Hind Madurai', system-ui, sans-serif;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 1rem/1.6 var(--body); -webkit-font-smoothing: antialiased; }
+a { color: inherit; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--haldi); outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -.02em; margin: 0; line-height: 1.12; }
+p { margin: 0; }
+[lang="te"] { font-family: 'Hind Guntur', var(--body); }
+[lang="ta"] { font-family: 'Hind Madurai', var(--body); }
+.wrap { width: min(1180px, 100% - 32px); margin-inline: auto; }
+.muted { color: var(--ink-soft); }
+
+/* Top bar */
+.top { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; padding: 20px 0 8px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-family: var(--display); font-weight: 800; font-size: 1.2rem; letter-spacing: -.02em; }
+.brand svg { width: 30px; height: 30px; }
+.demo-pill { font-size: .85rem; font-weight: 600; background: var(--haldi-wash); color: var(--haldi-deep); padding: 4px 12px; border-radius: 999px; }
+.family-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; padding: 20px 0 12px; }
+.family-line h1 { font-size: clamp(2rem, 4vw, 2.8rem); }
+
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 22px; }
+.tab { border: 0; background: transparent; padding: 10px 18px; border-radius: 999px; font-weight: 600; cursor: pointer; color: var(--ink-soft); box-shadow: inset 0 0 0 1.5px var(--line); }
+.tab { background: var(--sheet); }
+.tab[aria-selected="true"] { background: var(--haldi); color: #fff; box-shadow: 0 6px 16px -8px rgba(234,88,12,.7); }
+
+/* Layout */
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
+@media (max-width: 980px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.col { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; min-width: 0; }
+.panel { background: var(--sheet); border-radius: 20px; padding: 24px; border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(124,45,18,.04), 0 12px 32px -18px rgba(124,45,18,.18); }
+.panel h2 { font-size: 1.5rem; margin-bottom: 4px; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+
+/* Today */
+.today { position: relative; overflow: hidden; }
+.today::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 6px; background: linear-gradient(90deg, var(--haldi), #fb923c 60%, #fed7aa); }
+.today-state { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: .92rem; padding: 4px 12px; border-radius: 999px; margin: 6px 0 14px; }
+.state-ok { background: var(--leaf-wash); color: var(--leaf); }
+.state-alert { background: var(--postmark-wash); color: var(--postmark); }
+.state-wait { background: var(--haldi-wash); color: var(--haldi-deep); }
+.today-big { font-family: var(--display); font-weight: 700; letter-spacing: -.02em; font-size: clamp(1.6rem, 3.2vw, 2.25rem); line-height: 1.2; max-width: 22em; }
+.answers { list-style: none; padding: 0; margin: 20px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.answers li { display: flex; align-items: center; gap: 8px; background: var(--paper); border-radius: 10px; padding: 7px 12px; font-size: .93rem; }
+.dot { width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--ink-soft); }
+.dot.ok { background: var(--leaf); } .dot.bad { background: var(--postmark); } .dot.wait { background: var(--haldi); }
+
+/* Stats */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+.stat { padding: 4px 18px; border-left: 1px solid var(--line); }
+.stat:first-child { border-left: 0; padding-left: 0; }
+.stat b { display: block; font-family: var(--display); font-weight: 800; letter-spacing: -.03em; color: var(--haldi-deep); font-size: 2.1rem; line-height: 1.1; }
+.stat span { font-size: .9rem; color: var(--ink-soft); }
+@media (max-width: 640px) { .stats { grid-template-columns: 1fr 1fr; gap: 16px 0; } .stat:nth-child(3) { border-left: 0; padding-left: 0; } }
+
+/* Fortnight strip */
+.strip { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 6px; margin-top: 22px; }
+.day { display: grid; gap: 4px; justify-items: center; font-size: .75rem; color: var(--ink-soft); }
+.day i { width: 100%; aspect-ratio: 1; max-width: 40px; border-radius: 8px; background: var(--paper); display: grid; place-items: center; font-style: normal; font-size: .95rem; }
+.day.st-ok i { background: var(--leaf-wash); color: var(--leaf); }
+.day.st-alert i { background: var(--postmark-wash); color: var(--postmark); }
+.day.st-pending i { background: var(--haldi-wash); color: var(--haldi-deep); }
+.legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; font-size: .85rem; color: var(--ink-soft); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Sugar chart */
+.chart svg { width: 100%; height: auto; max-height: 200px; overflow: visible; }
+.chart .band { fill: var(--leaf-wash); }
+.chart .lineP { fill: none; stroke: var(--haldi); stroke-width: 2.25; stroke-linejoin: round; stroke-linecap: round; }
+.chart circle { fill: var(--sheet); stroke: var(--haldi); stroke-width: 2; }
+.chart circle.high { stroke: var(--postmark); fill: var(--postmark); }
+.chart text { font: 500 11px var(--body); fill: var(--ink-soft); }
+
+/* Calls table */
+table { width: 100%; border-collapse: collapse; font-size: .94rem; }
+th { text-align: left; font-weight: 600; color: var(--ink-soft); padding: 0 10px 10px 0; font-size: .85rem; }
+td { padding: 11px 10px 11px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.tag { display: inline-block; font-size: .8rem; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.t-ok { background: var(--leaf-wash); color: var(--leaf); } .t-bad { background: var(--postmark-wash); color: var(--postmark); } .t-wait { background: var(--haldi-wash); color: var(--haldi-deep); }
+.table-scroll { overflow-x: auto; }
+
+/* Phone simulator */
+.phone { background: var(--ink); color: var(--sheet); border-radius: 28px; padding: 18px 16px 20px; }
+.phone-top { display: flex; justify-content: space-between; align-items: center; font-size: .85rem; opacity: .8; padding: 0 6px 10px; }
+.screen { background: #fff4ea; color: var(--ink); border-radius: 12px; padding: 14px; height: 250px; overflow-y: auto; font-size: .98rem; line-height: 1.5; display: flex; flex-direction: column; gap: 8px; scroll-behavior: smooth; }
+.screen .line { background: #fff; box-shadow: 0 1px 2px rgba(124,45,18,.08); padding: 7px 10px; border-radius: 8px 8px 8px 2px; }
+.screen .me { align-self: flex-end; background: var(--haldi); color: #fff; padding: 4px 12px; border-radius: 8px 8px 2px 8px; font-weight: 600; }
+.screen .sys { align-self: center; font-size: .8rem; opacity: .75; text-align: center; }
+.screen .entry { align-self: flex-end; font-weight: 600; letter-spacing: .1em; }
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+.keypad button { border: 0; border-radius: 14px; padding: 10px 0 8px; background: rgba(255,255,255,.1); color: var(--sheet); font-size: 1.35rem; font-weight: 600; cursor: pointer; line-height: 1; display: grid; gap: 2px; }
+.keypad button small { font-size: .62rem; font-weight: 500; opacity: .7; min-height: .8em; }
+.keypad button:hover:not(:disabled) { background: rgba(255,255,255,.18); }
+.keypad button:active:not(:disabled) { transform: scale(.96); }
+.keypad button:disabled { opacity: .35; cursor: default; }
+.keypad button.sos small { color: #ffb3a8; opacity: 1; }
+.phone-actions { display: flex; gap: 8px; margin-top: 14px; }
+.phone-actions button { flex: 1; border: 0; border-radius: 999px; padding: 11px 8px; font-weight: 600; cursor: pointer; }
+.call-btn { background: #16a34a; color: #fff; }
+.end-btn { background: #d9473c; color: #fff; }
+.phone-actions button:disabled { opacity: .4; cursor: default; }
+.sim-extra { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 12px; font-size: .85rem; }
+.linkish { background: none; border: 0; padding: 0; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; color: inherit; opacity: .85; }
+.speak { display: flex; align-items: center; gap: 6px; opacity: .85; }
+
+/* Alerts */
+.alert-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.alert { background: var(--paper); border-radius: 12px; padding: 12px 14px; border-left: 4px solid var(--haldi); }
+.alert.urgent { border-left-color: var(--postmark); }
+.alert.done { opacity: .62; }
+.alert strong { display: block; font-weight: 600; line-height: 1.35; }
+.alert-meta { display: flex; justify-content: space-between; gap: 8px; align-items: center; font-size: .82rem; color: var(--ink-soft); margin-top: 6px; }
+.ack { border: 0; background: var(--sheet); border-radius: 999px; padding: 3px 10px; font-weight: 600; font-size: .8rem; cursor: pointer; }
+.empty { color: var(--ink-soft); padding: 8px 0; }
+
+/* Forms */
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 820px) { .settings-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 520px) { .form { grid-template-columns: minmax(0, 1fr); } .panel { padding: 20px 16px; } .strip { gap: 3px; } }
+.form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+.field { display: grid; gap: 5px; min-width: 0; }
+.field.full { grid-column: 1 / -1; }
+.field label, .lbl { font-weight: 600; font-size: .9rem; }
+.hint { font-size: .82rem; color: var(--ink-soft); }
+input, select, textarea { font: inherit; color: var(--ink); background: var(--paper); border: 1.5px solid transparent; border-radius: 10px; padding: 9px 12px; min-height: 44px; width: 100%; }
+textarea { min-height: 96px; resize: vertical; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--haldi); background: var(--sheet); }
+.check { display: flex; gap: 10px; align-items: center; font-size: .95rem; }
+.check input { width: 20px; height: 20px; min-height: 0; accent-color: var(--haldi); }
+.rows { display: grid; gap: 8px; }
+.row { display: grid; grid-template-columns: 1fr 130px 40px; gap: 8px; align-items: center; }
+.row.contact { grid-template-columns: 1fr 1fr 136px 40px; }
+@media (max-width: 560px) { .row.contact { grid-template-columns: 1fr 1fr; } }
+.icon-btn { border: 0; background: var(--paper); border-radius: 10px; height: 44px; cursor: pointer; font-size: 1.2rem; color: var(--ink-soft); }
+.icon-btn:hover { color: var(--postmark); }
+.btn { display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 999px; padding: 11px 20px; font-weight: 700; cursor: pointer; background: var(--haldi); color: #fff; text-decoration: none; transition: filter .15s, transform .15s; }
+.btn:hover:not(:disabled) { filter: brightness(1.06); }
+.btn:active:not(:disabled) { transform: scale(.98); }
+.btn-soft { background: var(--haldi-wash); color: var(--haldi-deep); }
+.btn-haldi { background: var(--haldi); color: #fff; }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn svg { width: 18px; height: 18px; flex: none; }
+.actions { grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
+
+/* Letter preview */
+dialog { border: 0; padding: 0; background: transparent; max-width: min(560px, 100% - 32px); }
+dialog::backdrop { background: rgba(28,25,23,.5); }
+.letter { position: relative; background: #fffaf5; color: var(--ink); padding: 34px 30px 24px; border-radius: 4px; white-space: pre-wrap; font-size: 1rem; line-height: 2; background-image: repeating-linear-gradient(transparent 0 31px, rgba(234,88,12,.12) 31px 32px); }
+.letter::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 8px; background: linear-gradient(90deg, var(--haldi), #fb923c 60%, #fed7aa); }
+.letter-close { position: absolute; top: 14px; right: 14px; }
+
+/* Simulator: lines spoken in a family member's own voice */
+.screen .line.voiced { background: #fff; border-left: 3px solid var(--haldi); }
+.voice-tag { display: block; font-size: .72rem; font-weight: 600; letter-spacing: .02em; opacity: .7; }
+.voice-nudge { display: inline-flex; align-items: center; gap: 8px; margin-top: 18px; font-weight: 700; font-size: .93rem; text-decoration: none; color: var(--haldi-deep); background: var(--haldi-wash); padding: 8px 14px; border-radius: 999px; }
+.voice-nudge:hover { text-decoration: underline; text-underline-offset: 3px; }
+.voice-on { display: inline-flex; align-items: center; gap: 8px; margin-top: 16px; font-size: .9rem; color: var(--ink-soft); }
+
+/* Family voice studio */
+.studio { padding: 0; overflow: hidden; scroll-margin-top: 16px; }
+.studio-head { padding: 28px 28px 22px; border-bottom: 1px solid var(--line); position: relative; background: linear-gradient(120deg, var(--haldi-wash), var(--sheet) 70%); }
+.studio-head::after { content: ''; position: absolute; right: 28px; top: 26px; width: 74px; height: 74px; border-radius: 50%; border: 2px dashed var(--haldi); opacity: .35; transform: rotate(-12deg); }
+.eyebrow { display: inline-flex; gap: 8px; align-items: center; font-size: .76rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--haldi-deep); margin-bottom: 8px; }
+.eyebrow::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--haldi); }
+.studio-head h2 { font-size: clamp(1.75rem, 3.2vw, 2.4rem); margin: 0; }
+.studio-head p { max-width: 42em; margin-top: 8px; }
+.studio-grid { display: grid; grid-template-columns: 270px minmax(0, 1fr); }
+.speakers { padding: 20px 16px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; background: color-mix(in srgb, var(--paper) 40%, var(--sheet)); }
+.speakers .lbl { padding: 0 10px 6px; color: var(--ink-soft); font-size: .82rem; }
+.speaker { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border: 1.5px solid transparent; background: transparent; padding: 10px; border-radius: 14px; cursor: pointer; }
+.speaker:hover { background: var(--sheet); }
+.speaker[aria-current="true"] { background: var(--sheet); border-color: var(--haldi); box-shadow: 0 6px 16px -10px rgba(234,88,12,.6); }
+.speaker b { display: block; font-weight: 600; line-height: 1.25; }
+.speaker small { display: block; color: var(--ink-soft); font-size: .8rem; line-height: 1.3; }
+.speaker.add { border: 1.5px dashed var(--line); color: var(--ink-soft); justify-content: center; font-weight: 600; margin-top: 6px; }
+.speaker.add:hover { color: var(--ink); border-color: var(--ink-soft); }
+.avatar { width: 44px; height: 44px; border-radius: 50%; flex: none; display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 1.2rem; background: var(--haldi); color: #fff; position: relative; }
+.avatar.std { background: var(--paper); color: var(--ink-soft); font-family: var(--body); font-size: 1rem; }
+.avatar svg { position: absolute; inset: -5px; width: 54px; height: 54px; transform: rotate(-90deg); }
+.avatar circle { fill: none; stroke-width: 3; }
+.avatar .track { stroke: var(--line); }
+.avatar .fill { stroke: var(--haldi); stroke-linecap: round; transition: stroke-dashoffset .5s; }
+.on-calls { display: inline-block; margin-top: 3px; font-size: .7rem; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: var(--leaf-wash); color: var(--leaf); }
+
+.booth { padding: 24px 28px 28px; min-width: 0; }
+.booth-head { display: flex; justify-content: space-between; gap: 14px 20px; flex-wrap: wrap; align-items: center; }
+.booth-who { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.booth-who h3 { font-size: 1.5rem; }
+.booth-who small { color: var(--ink-soft); font-size: .88rem; }
+.switch { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: .93rem; cursor: pointer; padding: 7px 16px 7px 7px; border-radius: 999px; background: var(--paper); user-select: none; }
+.switch input { appearance: none; -webkit-appearance: none; width: 46px; height: 28px; min-height: 0; padding: 0; border: 0; border-radius: 999px; background: var(--ink-soft); opacity: .55; position: relative; cursor: pointer; transition: background .2s, opacity .2s; flex: none; }
+.switch input::after { content: ''; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+.switch input:checked { background: var(--haldi); opacity: 1; }
+.switch input:checked::after { transform: translateX(18px); }
+.switch input:focus { background: var(--ink-soft); }
+.switch input:checked:focus { background: var(--haldi); }
+
+.progress { display: flex; gap: 4px; margin: 20px 0 8px; }
+.progress i { flex: 1; height: 7px; border-radius: 4px; background: var(--paper); transition: background .3s; }
+.progress i.done { background: var(--haldi); }
+.progress i.adapted { background: #fdba74; }
+.progress-line { display: flex; justify-content: space-between; align-items: center; gap: 10px 16px; flex-wrap: wrap; font-size: .9rem; color: var(--ink-soft); }
+.progress-line b { color: var(--ink); }
+.tip { display: flex; gap: 12px; align-items: flex-start; background: var(--haldi-wash); border-radius: 12px; padding: 12px 16px; font-size: .9rem; margin: 18px 0; }
+.tip svg { width: 20px; height: 20px; flex: none; margin-top: 2px; color: var(--haldi-deep); }
+
+.takes { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.take { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 14px; align-items: start; padding: 14px 16px; border-radius: 14px; background: var(--sheet); border: 1.5px solid var(--line); box-shadow: 0 1px 2px rgba(124,45,18,.05); transition: background .2s, border-color .2s; }
+.take-num { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; font-size: .85rem; border: 1.5px solid var(--line); color: var(--ink-soft); }
+.take.has .take-num { background: var(--haldi); border-color: var(--haldi); color: #fff; }
+.take.adapted .take-num { background: #fdba74; border-color: #fdba74; color: var(--ink); }
+.take-label { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; font-size: .84rem; font-weight: 600; color: var(--ink-soft); }
+.script { font-size: 1.08rem; line-height: 1.5; margin-top: 3px; }
+.hint-en { font-size: .84rem; color: var(--ink-soft); margin-top: 2px; }
+.take-wave { margin-top: 8px; display: flex; align-items: center; gap: 10px; min-height: 26px; color: var(--ink-soft); font-size: .8rem; font-variant-numeric: tabular-nums; }
+.take-wave:empty { display: none; }
+.wave { width: 168px; height: 26px; flex: none; }
+.wave rect { fill: var(--ink); opacity: .5; }
+.take.adapted .wave rect { fill: var(--haldi-deep); }
+.take.playing { border-color: var(--haldi); background: var(--haldi-wash); }
+.take.playing .wave rect { opacity: 1; fill: var(--haldi); }
+.take.recording { border-color: var(--postmark); background: var(--postmark-wash); }
+.take.saving { opacity: .6; }
+.take-actions { display: flex; gap: 8px; align-items: center; padding-top: 2px; }
+.round { width: 46px; height: 46px; border-radius: 50%; border: 0; display: grid; place-items: center; cursor: pointer; background: var(--haldi-wash); color: var(--haldi-deep); flex: none; }
+.round svg { width: 18px; height: 18px; }
+.round:disabled { opacity: .4; cursor: default; }
+.round.rec { background: var(--postmark); color: #fff; }
+.round.rec:hover:not(:disabled) { filter: brightness(1.1); }
+.take.recording .round.rec { animation: pulse 1.3s ease-out infinite; }
+@keyframes pulse { from { box-shadow: 0 0 0 0 rgba(184,50,42,.5); } to { box-shadow: 0 0 0 16px rgba(184,50,42,0); } }
+.live { display: flex; align-items: center; gap: 3px; height: 26px; }
+.live i { width: 4px; height: 3px; border-radius: 2px; background: var(--postmark); }
+.rec-time { font-weight: 600; color: var(--postmark); }
+.chip { font-size: .72rem; font-weight: 600; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+.chip.ok { background: var(--leaf-wash); color: var(--leaf); }
+.chip.ad { background: var(--haldi-wash); color: var(--haldi-deep); }
+.chip.miss { background: var(--sheet); color: var(--ink-soft); }
+.chip.bad { background: var(--postmark-wash); color: var(--postmark); }
+.more { margin-top: 18px; }
+.more summary { cursor: pointer; font-weight: 600; padding: 8px 0; }
+.more summary span { font-weight: 400; color: var(--ink-soft); }
+.more .takes { margin-top: 8px; }
+.adapt-box { margin-top: 22px; border-radius: 14px; padding: 16px 18px; background: linear-gradient(120deg, var(--haldi-wash), var(--paper)); display: flex; gap: 12px 18px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+.adapt-box p { max-width: 36em; font-size: .93rem; }
+.adapt-box b { display: block; font-size: 1rem; }
+.spinner { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--ink); animation: spin .8s linear infinite; display: inline-block; vertical-align: -2px; margin-right: 6px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.booth-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 22px; font-size: .84rem; color: var(--ink-soft); }
+.linkish.danger { color: var(--postmark); opacity: 1; }
+.how { list-style: none; padding: 0; margin: 4px 0 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.how li { background: var(--haldi-wash); border-radius: 14px; padding: 14px 16px; font-size: .92rem; }
+.how b { display: block; font-family: var(--display); font-weight: 800; font-size: 1.7rem; line-height: 1; color: var(--haldi-deep); margin-bottom: 6px; }
+.edit-voice { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; margin-top: 14px; align-items: end; }
+@media (max-width: 860px) {
+  .studio-grid { grid-template-columns: minmax(0, 1fr); }
+  .speakers { border-right: 0; border-bottom: 1px solid var(--line); flex-direction: row; overflow-x: auto; padding: 14px 16px; }
+  .speakers .lbl { display: none; }
+  .speaker { width: auto; flex: none; }
+  .speaker.add { margin-top: 0; }
+}
+@media (max-width: 600px) {
+  .studio-head, .booth { padding-left: 16px; padding-right: 16px; }
+  .studio-head::after { display: none; }
+  .how { grid-template-columns: minmax(0, 1fr); }
+  .take { grid-template-columns: 28px minmax(0, 1fr); gap: 10px; padding: 12px; }
+  .take-actions { grid-column: 2; }
+  .wave { width: 120px; }
+  .edit-voice { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .take.recording .round.rec { animation: none; } .spinner { animation-duration: 2.4s; } }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); background: var(--ink); color: var(--sheet); padding: 12px 20px; border-radius: 999px; font-weight: 600; opacity: 0; pointer-events: none; transition: .25s; z-index: 10; max-width: calc(100% - 32px); text-align: center; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+.foot { padding: 32px 0 48px; font-size: .88rem; color: var(--ink-soft); }
+.skeleton { padding: 80px 0; text-align: center; color: var(--ink-soft); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="/">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="var(--haldi)"/><path d="M13 12c1.6 0 2.4 3.7 2.4 5 0 1.4-1.6 1.6-1.6 2.6 0 2.2 3.4 5.6 5.6 5.6 1 0 1.2-1.6 2.6-1.6 1.3 0 5 .8 5 2.4 0 2-2.6 3.5-4.6 3.5C16.6 29.5 10.5 23.4 10.5 17c0-2 1-5 2.5-5z" fill="#fff"/></svg>
+      Amma Check-in
+    </a>
+    <span class="demo-pill" id="mode-pill" hidden></span>
+  </header>
+  <div id="app"><p class="skeleton">Loading your family…</p></div>
+  <p class="foot">Amma Check-in is not a medical or emergency service. In an emergency in India, dial 112.</p>
+</div>
+
+<dialog id="letter-dialog" aria-label="Sunday letter preview">
+  <div class="letter" id="letter-body"></div>
+  <button class="btn btn-soft letter-close" id="letter-close">Close</button>
+</dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const KEY = params.get('key') || 'demo';
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const LANGS = { te: 'తెలుగు, Telugu', hi: 'हिन्दी, Hindi', ta: 'தமிழ், Tamil', en: 'English' };
+const SPEECH = { te: 'te-IN', hi: 'hi-IN', ta: 'ta-IN', en: 'en-IN' };
+
+let data = null, offline = false, activeId = null;
+let sim = { checkinId: null, render: null, entry: '' };
+
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2600); }
+
+async function api(path, opts = {}) {
+  if (offline) throw new Error('This is a static preview. Start the server (npm start) to make changes.');
+  const res = await fetch('/api' + path, { ...opts, headers: { 'Content-Type': 'application/json', 'x-family-key': KEY, ...(opts.headers || {}) } });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error || `Request failed (${res.status})`);
+  return json;
+}
+
+async function load() {
+  try {
+    data = await api('/family');
+  } catch (e) {
+    if (window.DEMO_DATA) { data = window.DEMO_DATA; offline = true; }
+    else { $('#app').innerHTML = `<div class="panel skeleton"><h2>We couldn't open this dashboard</h2><p class="muted" style="margin-top:8px">${esc(e.message)}. Check that your link includes your private key.</p></div>`; return; }
+  }
+  if (!activeId || !data.parents.some(p => p.id === activeId)) activeId = data.parents[0]?.id;
+  const pill = $('#mode-pill');
+  if (offline) { pill.hidden = false; pill.textContent = 'Static preview with sample data'; }
+  else if (data.demoMode) { pill.hidden = false; pill.textContent = 'Demo mode: calls are simulated'; }
+  render();
+}
+
+// ── Helpers ──────────────────────────────────────────────
+const parent = () => data.parents.find(p => p.id === activeId);
+const fmtTime = (iso) => iso ? new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }) : '';
+const fmtDay = (d) => new Date(d + 'T12:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+const ago = (iso) => { const m = Math.round((Date.now() - new Date(iso)) / 60000); if (m < 1) return 'just now'; if (m < 60) return `${m} min ago`; const h = Math.round(m / 60); if (h < 24) return `${h} h ago`; return `${Math.round(h / 24)} d ago`; };
+const time12 = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'am' : 'pm'}`; };
+const todayIST = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+const listJoin = (a) => a.length <= 1 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' and ' + a.at(-1);
+const medName = (p, id) => p.medicines.find(m => m.id === id)?.name || 'a medicine';
+
+function statusTag(c) {
+  const map = { completed: ['t-ok', 'Answered'], partial: ['t-wait', 'Hung up early'], no_answer: ['t-bad', 'No answer'], opted_out: ['t-bad', 'Opted out'], ringing: ['t-wait', 'Ringing'], in_progress: ['t-wait', 'On call'], retry_scheduled: ['t-wait', 'Retrying'], scheduled: ['t-wait', 'Scheduled'] };
+  const [cls, label] = map[c.status] || ['t-wait', c.status];
+  return `<span class="tag ${cls}">${label}</span>`;
+}
+
+function todaySummary(p) {
+  const who = p.relation && p.relation !== 'Parent' ? p.relation : p.name;
+  const today = p.recent.filter(c => c.date === todayIST());
+  const morning = today.find(c => c.slot === 'morning');
+  if (!p.active) return { state: 'alert', label: 'Calls stopped', text: `Calls to ${who} are stopped. Turn them back on in settings below.` };
+  if (p.pausedUntil && p.pausedUntil >= todayIST()) return { state: 'wait', label: 'Paused', text: `Calls are paused until ${fmtDay(p.pausedUntil)}.` };
+  if (!morning) return { state: 'wait', label: 'Not called yet', text: `Today's call to ${who} is at ${time12(p.schedule[0].time)}.` };
+  if (['ringing', 'retry_scheduled', 'scheduled', 'in_progress'].includes(morning.status)) return { state: 'wait', label: 'In progress', text: morning.status === 'retry_scheduled' ? `${who} didn't pick up. We'll try again at ${fmtTime(morning.nextAttemptAt)}.` : `Calling ${who} now…` };
+  if (morning.status === 'no_answer') return { state: 'alert', label: 'Needs you', text: `${who} didn't answer today, even after we tried again. Please give them a call.` };
+  if (morning.answers.sos) return { state: 'alert', label: 'Needs you', text: `${who} pressed 9 and wants you to call.` };
+
+  const a = morning.answers;
+  const taken = Object.entries(a.meds).filter(([, v]) => v === 'taken').map(([k]) => medName(p, k));
+  const missed = Object.entries(a.meds).filter(([, v]) => v === 'missed').map(([k]) => medName(p, k));
+  const parts = [];
+  if (taken.length) parts.push(`took ${listJoin(taken)}`);
+  if (missed.length) parts.push(`hasn't taken ${listJoin(missed)}`);
+  const meal = morning.steps?.find(st => st.type === 'meal') ? 'breakfast' : null;
+  if (a.meal === 'ate') parts.push(`had ${meal || 'their meal'}`);
+  if (a.meal === 'skipped') parts.push(`hasn't had ${meal || 'their meal'} yet`);
+  if (a.mood === 'good') parts.push('is feeling good');
+  if (a.mood === 'okay') parts.push('is feeling okay');
+  if (a.mood === 'unwell') parts.push('is not feeling well');
+  const bad = missed.length || a.mood === 'unwell' || a.meal === 'skipped';
+  const text = parts.length ? `${who} ${listJoin(parts)}.` : `${who} answered at ${fmtTime(morning.answeredAt)}.`;
+  return { state: bad ? 'alert' : 'ok', label: bad ? 'Needs a look' : `All well at ${fmtTime(morning.answeredAt)}`, text };
+}
+
+function answerChips(p) {
+  const c = p.recent.find(c => c.date === todayIST() && c.slot === 'morning');
+  if (!c || !c.completedAt) return '';
+  const chips = [];
+  for (const [id, v] of Object.entries(c.answers.meds)) chips.push(`<li><span class="dot ${v === 'taken' ? 'ok' : v === 'missed' ? 'bad' : 'wait'}"></span>${esc(medName(p, id))}: ${v === 'taken' ? 'taken' : v === 'missed' ? 'not taken' : 'no answer'}</li>`);
+  if (c.answers.meal) chips.push(`<li><span class="dot ${c.answers.meal === 'ate' ? 'ok' : c.answers.meal === 'skipped' ? 'bad' : 'wait'}"></span>Breakfast: ${c.answers.meal === 'ate' ? 'eaten' : c.answers.meal === 'skipped' ? 'not yet' : 'no answer'}</li>`);
+  if (c.answers.mood) chips.push(`<li><span class="dot ${c.answers.mood === 'unwell' ? 'bad' : 'ok'}"></span>Mood: ${c.answers.mood === 'unwell' ? 'not well' : c.answers.mood}</li>`);
+  if (c.answers.reading) chips.push(`<li><span class="dot ${c.answers.reading > 250 || c.answers.reading < 70 ? 'bad' : 'ok'}"></span>Sugar: ${c.answers.reading} mg/dL</li>`);
+  if (c.answers.voiceNotePlayed) chips.push(`<li><span class="dot ok"></span>Heard your message</li>`);
+  return `<ul class="answers">${chips.join('')}</ul>`;
+}
+
+function strip(p) {
+  const icon = { ok: '✓', alert: '!', pending: '…', none: '' };
+  return `<div class="strip" aria-label="Last 14 days">${p.stats.timeline.map(d => `<div class="day st-${d.state}" title="${fmtDay(d.date)}: ${d.state === 'ok' ? 'all well' : d.state === 'alert' ? 'needed attention' : d.state === 'pending' ? 'in progress' : 'no call'}"><i>${icon[d.state]}</i>${new Date(d.date + 'T12:00:00').getDate()}</div>`).join('')}</div>
+  <div class="legend"><span><span class="dot ok"></span>All well</span><span><span class="dot bad"></span>Needed attention</span><span><span class="dot wait"></span>In progress</span></div>`;
+}
+
+function sugarChart(p) {
+  const pts = p.stats.readings;
+  if (p.askReading !== 'sugar') return '';
+  if (pts.length < 2) return `<section class="panel"><h2>Sugar readings</h2><p class="empty">Readings will appear here after a couple of calls.</p></section>`;
+  const W = 600, H = 150, pad = 26, lo = 60, hi = Math.max(300, ...pts.map(r => r.value) ) ;
+  const x = i => pad + i * (W - pad * 2) / (pts.length - 1);
+  const y = v => H - pad - (v - lo) / (hi - lo) * (H - pad * 2);
+  const path = pts.map((r, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(r.value).toFixed(1)}`).join('');
+  const avg = Math.round(pts.reduce((a, r) => a + r.value, 0) / pts.length);
+  return `<section class="panel chart"><div class="panel-head"><h2>Sugar readings</h2><span class="muted">Average ${avg} mg/dL · safe range shaded</span></div>
+  <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Sugar readings over the last two weeks, average ${avg}">
+    <rect class="band" x="${pad}" width="${W - pad * 2}" y="${y(250)}" height="${y(70) - y(250)}" rx="6"/>
+    <text x="0" y="${y(250) + 4}">250</text><text x="0" y="${y(70) + 4}">70</text>
+    <path class="lineP" d="${path}"/>
+    ${pts.map((r, i) => `<circle class="${r.value > 250 || r.value < 70 ? 'high' : ''}" cx="${x(i)}" cy="${y(r.value)}" r="4.5"><title>${fmtDay(r.date)}: ${r.value} mg/dL</title></circle>`).join('')}
+    <text x="${x(0)}" y="${H - 4}" text-anchor="start">${fmtDay(pts[0].date)}</text><text x="${x(pts.length - 1)}" y="${H - 4}" text-anchor="end">${fmtDay(pts.at(-1).date)}</text>
+  </svg></section>`;
+}
+
+function callsTable(p) {
+  const rows = p.recent.slice(0, 10).map(c => {
+    const meds = Object.entries(c.answers.meds || {}).map(([k, v]) => `${esc(medName(p, k))} ${v === 'taken' ? '✓' : v === 'missed' ? '✗' : '–'}`).join(', ');
+    const mood = c.answers.mood ? { good: 'Good', okay: 'Okay', unwell: 'Not well', no_response: '–' }[c.answers.mood] : '';
+    const meal = c.answers.meal === 'ate' ? (c.slot === 'evening' ? 'Dinner ✓' : 'Breakfast ✓') : c.answers.meal === 'skipped' ? (c.slot === 'evening' ? 'Dinner ✗' : 'Breakfast ✗') : '';
+    return `<tr><td>${fmtDay(c.date)}<br><span class="muted">${c.slot}${c.answeredAt ? ', ' + fmtTime(c.answeredAt) : ''}</span></td><td>${statusTag(c)}</td><td>${meds || '<span class="muted">—</span>'}${meal ? `<br><span class="muted">${meal}</span>` : ''}</td><td>${mood}${c.answers.reading ? `<br><span class="muted">${c.answers.reading} mg/dL</span>` : ''}${c.answers.sos ? '<br><span class="tag t-bad">Pressed 9</span>' : ''}</td></tr>`;
+  }).join('');
+  return `<section class="panel"><div class="panel-head"><h2>Recent calls</h2><button class="btn btn-soft" id="letter-btn">Preview Sunday letter</button></div>
+  <div class="table-scroll"><table><thead><tr><th>Day</th><th>Call</th><th>Medicines</th><th>Feeling</th></tr></thead><tbody>${rows || '<tr><td colspan="4" class="empty">No calls yet. The first one goes out at the time you chose.</td></tr>'}</tbody></table></div></section>`;
+}
+
+function alertsPanel() {
+  const list = data.alerts.filter(a => a.parentId === activeId).slice(0, 8);
+  return `<section class="panel"><div class="panel-head"><h2>Alerts</h2><span class="muted">Sent to WhatsApp</span></div>
+  ${list.length ? `<ul class="alert-list">${list.map(a => `<li class="alert ${a.severity === 'urgent' ? 'urgent' : ''} ${a.acknowledged ? 'done' : ''}"><strong>${esc(a.title)}</strong><div class="alert-meta"><span>${ago(a.createdAt)} · to ${a.deliveries.map(d => esc(d.name)).join(', ')}</span>${a.acknowledged ? '<span>Handled</span>' : `<button class="ack" data-ack="${a.id}">Mark handled</button>`}</div></li>`).join('')}</ul>` : '<p class="empty">No alerts. That means every call went well.</p>'}</section>`;
+}
+
+function phonePanel(p) {
+  const keys = [['1', ''], ['2', 'ABC'], ['3', 'DEF'], ['4', 'GHI'], ['5', 'JKL'], ['6', 'MNO'], ['7', 'PQRS'], ['8', 'TUV'], ['9', 'help'], ['*', ''], ['0', 'stop'], ['#', 'done']];
+  return `<section class="panel"><div class="panel-head"><h2>Try the call</h2></div>
+  <p class="muted" style="margin:-8px 0 14px;font-size:.92rem">Answer as ${esc(p.addressAs || p.name)} would. This runs the real call logic, so the dashboard and alerts update too.</p>
+  <div class="phone">
+    <div class="phone-top"><span>${esc(LANGS[p.language])}</span><span id="sim-status">Idle</span></div>
+    <div class="screen" id="screen" aria-live="polite"><div class="sys">Press the green button to start today's call.</div></div>
+    <div class="keypad">${keys.map(([k, s]) => `<button data-key="${k}" class="${k === '9' ? 'sos' : ''}" disabled aria-label="Key ${k}${s ? ', ' + s : ''}">${k}<small>${s}</small></button>`).join('')}</div>
+    <div class="phone-actions"><button class="call-btn" id="sim-start">Start call</button><button class="end-btn" id="sim-end" disabled>Hang up</button></div>
+    <div class="sim-extra"><label class="speak"><input type="checkbox" id="speak" style="width:16px;height:16px;min-height:0"> Play sound</label><button class="linkish" id="sim-noanswer">Pretend no one answers</button></div>
+  </div></section>`;
+}
+
+function settingsPanel(p) {
+  const morning = p.schedule.find(s => s.slot === 'morning')?.time || '08:30';
+  const evening = p.schedule.find(s => s.slot === 'evening')?.time || '20:00';
+  const note = p.voiceNoteText ? (p.voiceNotePlayedAt ? `Played on ${fmtDay(p.voiceNotePlayedAt.slice(0, 10))}. Write a new one anytime.` : 'Will be read out on the next call.') : `Read out once, in ${LANGS[p.language].split(',')[0]}, on the next call.`;
+  return `<div class="settings-grid">
+  <section class="panel"><h2>Calls for ${esc(p.relation !== 'Parent' ? p.relation : p.name)}</h2><p class="muted" style="margin-bottom:16px">Changes apply from the next call.</p>
+    <form class="form" id="parent-form">
+      <div class="field"><label for="f-name">Name</label><input id="f-name" name="name" value="${esc(p.name)}"></div>
+      <div class="field"><label for="f-addr">The call calls them</label><input id="f-addr" name="addressAs" value="${esc(p.addressAs)}"></div>
+      <div class="field"><label for="f-phone">Phone</label><input id="f-phone" name="phone" type="tel" value="${esc(p.phone)}"></div>
+      <div class="field"><label for="f-lang">Language</label><select id="f-lang" name="language">${Object.entries(LANGS).map(([k, v]) => `<option value="${k}" ${k === p.language ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+      <div class="field"><label for="f-time">Morning call</label><input id="f-time" name="callTime" type="time" value="${morning}"></div>
+      <div class="field"><label for="f-eve">Evening call</label><input id="f-eve" name="eveningTime" type="time" value="${evening}"><span class="hint">Only if a medicine is set to evening.</span></div>
+      <div class="field full"><span class="lbl">Medicines</span>
+        <div class="rows" id="med-rows">${p.medicines.map(medRow).join('')}</div>
+        <button type="button" class="btn btn-soft" id="add-med" style="justify-self:start;margin-top:4px">Add medicine</button></div>
+      <label class="check"><input type="checkbox" name="askMood" ${p.askMood ? 'checked' : ''}> Ask how they feel</label>
+      <label class="check"><input type="checkbox" name="askMeal" ${p.askMeal ? 'checked' : ''}> Ask if they've eaten</label>
+      <label class="check"><input type="checkbox" name="askReading" ${p.askReading === 'sugar' ? 'checked' : ''}> Ask for sugar reading</label>
+      <div class="field"><label for="f-pause">Pause calls until</label><input id="f-pause" name="pausedUntil" type="date" value="${p.pausedUntil || ''}"><span class="hint">Travelling or in hospital. Leave empty to keep calling.</span></div>
+      <label class="check" style="align-self:center"><input type="checkbox" name="active" ${p.active ? 'checked' : ''}> Calls are on</label>
+      <div class="actions"><button class="btn" type="submit">Save changes</button><button class="btn btn-soft" type="button" id="call-now">Call ${esc(p.relation !== 'Parent' ? p.relation : p.name)} now</button></div>
+    </form>
+  </section>
+  <div class="col">
+    <section class="panel"><h2>Send a message</h2><p class="muted" style="margin-bottom:14px">${note}</p>
+      <form class="form" id="note-form" style="grid-template-columns:1fr"><div class="field"><label for="f-note" class="lbl">Your message</label><textarea id="f-note" name="voiceNoteText" lang="${p.language}" maxlength="300" placeholder="Amma, I'll video call on Sunday. Take care!">${esc(p.voiceNoteText || '')}</textarea><span class="hint">Write it in ${LANGS[p.language].split(', ')[1] || 'English'} for the most natural sound.</span></div>
+      <div class="actions"><button class="btn btn-haldi" type="submit">Save message</button></div></form>
+    </section>
+    <section class="panel"><h2>Who gets alerts</h2><p class="muted" style="margin-bottom:14px">Emergency contacts only get urgent alerts: no answer and pressed 9.</p>
+      <form id="contacts-form"><div class="rows" id="contact-rows">${data.family.contacts.map(contactRow).join('')}</div>
+      <div class="actions" style="margin-top:12px"><button type="button" class="btn btn-soft" id="add-contact">Add person</button><button class="btn" type="submit">Save people</button></div></form>
+    </section>
+  </div></div>`;
+}
+const medRow = (m = {}) => `<div class="row med"><input aria-label="Medicine name" name="medName" value="${esc(m.name || '')}" placeholder="Medicine name" data-id="${m.id || ''}"><select aria-label="When" name="medSlot"><option value="morning" ${m.slot !== 'evening' ? 'selected' : ''}>Morning</option><option value="evening" ${m.slot === 'evening' ? 'selected' : ''}>Evening</option></select><button type="button" class="icon-btn" data-remove aria-label="Remove medicine">×</button></div>`;
+const contactRow = (c = {}) => `<div class="row contact"><input aria-label="Name" name="cName" value="${esc(c.name || '')}" placeholder="Name"><input aria-label="WhatsApp number" name="cPhone" type="tel" value="${esc(c.phone || '')}" placeholder="+91…"><select aria-label="Role" name="cRole"><option value="family" ${c.role !== 'emergency' ? 'selected' : ''}>Family</option><option value="emergency" ${c.role === 'emergency' ? 'selected' : ''}>Emergency</option></select><button type="button" class="icon-btn" data-remove aria-label="Remove person">×</button><input type="hidden" name="cRel" value="${esc(c.relation || '')}"></div>`;
+
+// ── Render ───────────────────────────────────────────────
+function render() {
+  cancelRecording();
+  const p = parent();
+  if (!p) { $('#app').innerHTML = '<div class="panel skeleton">No parents added yet.</div>'; return; }
+  const s = todaySummary(p);
+  const st = p.stats;
+  const answeredPct = st.callsPlaced ? Math.round(st.answered / st.callsPlaced * 100) : null;
+  $('#app').innerHTML = `
+  <div class="family-line"><h1>${esc(data.family.childName)}'s family</h1><span class="muted">${esc(data.plan?.name || '')} plan${data.family.status === 'trial' ? `, free trial until ${fmtDay(data.family.trialEndsAt.slice(0, 10))}` : ''}</span></div>
+  <div class="tabs" role="tablist">${data.parents.map(x => `<button class="tab" role="tab" aria-selected="${x.id === activeId}" data-parent="${x.id}">${esc(x.relation !== 'Parent' ? x.relation : x.name)}</button>`).join('')}</div>
+  <div class="grid">
+    <div class="col">
+      <section class="panel today"><span class="today-state state-${s.state}">${esc(s.label)}</span><p class="today-big">${esc(s.text)}</p>${answerChips(p)}${voiceLine(p)}</section>
+      <section class="panel"><div class="panel-head"><h2>Last two weeks</h2></div>
+        <div class="stats">
+          <div class="stat"><b>${st.adherence ?? '–'}${st.adherence !== null ? '%' : ''}</b><span>medicines taken</span></div>
+          <div class="stat"><b>${st.streak}</b><span>day streak</span></div>
+          <div class="stat"><b>${answeredPct ?? '–'}${answeredPct !== null ? '%' : ''}</b><span>calls answered</span></div>
+          <div class="stat"><b>${st.moods.good}</b><span>days feeling good</span></div>
+        </div>${strip(p)}</section>
+      ${sugarChart(p)}
+      ${callsTable(p)}
+    </div>
+    <div class="col">${phonePanel(p)}${alertsPanel()}</div>
+  </div>
+  <section class="panel studio" id="studio" style="margin-top:24px"></section>
+  <div style="margin-top:24px">${settingsPanel(p)}</div>`;
+  renderStudio();
+  bind();
+}
+
+// ── Events ───────────────────────────────────────────────
+function bind() {
+  document.querySelectorAll('[data-parent]').forEach(b => b.onclick = () => { activeId = b.dataset.parent; sim = { checkinId: null, render: null, entry: '' }; studio = { voiceId: null, creating: false, editing: false, confirmDelete: null, moreOpen: false }; stopPlayback(); render(); });
+  document.querySelectorAll('[data-ack]').forEach(b => b.onclick = async () => { try { await api(`/alerts/${b.dataset.ack}/ack`, { method: 'POST' }); await load(); } catch (e) { toast(e.message); } });
+  $('#letter-btn').onclick = async () => { try { const r = await api('/report'); $('#letter-body').textContent = r.text.replace(/\*/g, ''); $('#letter-dialog').showModal(); } catch (e) { toast(e.message); } };
+  $('#letter-close').onclick = () => $('#letter-dialog').close();
+
+  // Simulator
+  $('#sim-start').onclick = simStart;
+  $('#sim-end').onclick = simHangup;
+  $('#sim-noanswer').onclick = async () => { try { await api('/simulate/no-answer', { method: 'POST', body: JSON.stringify({ parentId: activeId }) }); toast('No answer after 2 tries. Alert sent.'); await load(); } catch (e) { toast(e.message); } };
+  document.querySelectorAll('[data-key]').forEach(b => b.onclick = () => press(b.dataset.key));
+
+  // Settings
+  const medRows = $('#med-rows');
+  $('#add-med').onclick = () => medRows.insertAdjacentHTML('beforeend', medRow());
+  $('#add-contact').onclick = () => $('#contact-rows').insertAdjacentHTML('beforeend', contactRow());
+  $('#parent-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    const medicines = [...medRows.querySelectorAll('.row')].map(r => ({ id: r.querySelector('[name=medName]').dataset.id || undefined, name: r.querySelector('[name=medName]').value, slot: r.querySelector('[name=medSlot]').value })).filter(m => m.name.trim());
+    const body = { name: f.name.value, addressAs: f.addressAs.value, phone: f.phone.value.replace(/[\s-]/g, ''), language: f.language.value, callTime: f.callTime.value, eveningTime: f.eveningTime.value, medicines, askMood: f.askMood.checked, askMeal: f.askMeal.checked, askReading: f.askReading.checked ? 'sugar' : 'none', pausedUntil: f.pausedUntil.value || null, active: f.active.checked };
+    try { await api(`/parents/${activeId}`, { method: 'PATCH', body: JSON.stringify(body) }); toast('Changes saved'); await load(); } catch (ex) { toast(ex.message); }
+  };
+  $('#note-form').onsubmit = async (e) => { e.preventDefault(); try { await api(`/parents/${activeId}`, { method: 'PATCH', body: JSON.stringify({ voiceNoteText: e.target.voiceNoteText.value }) }); toast('Message saved'); await load(); } catch (ex) { toast(ex.message); } };
+  $('#contacts-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const contacts = [...$('#contact-rows').querySelectorAll('.row')].map(r => ({ name: r.querySelector('[name=cName]').value, phone: r.querySelector('[name=cPhone]').value.replace(/[\s-]/g, ''), role: r.querySelector('[name=cRole]').value, relation: r.querySelector('[name=cRel]').value })).filter(c => c.name || c.phone);
+    try { await api('/family/contacts', { method: 'PATCH', body: JSON.stringify({ contacts }) }); toast('People saved'); await load(); } catch (ex) { toast(ex.message); }
+  };
+  $('#call-now').onclick = async () => { try { const r = await api(`/parents/${activeId}/call-now`, { method: 'POST' }); toast(r.demo ? 'Demo mode: use the phone above to answer.' : 'Calling now…'); await load(); } catch (e) { toast(e.message); } };
+}
+function removeRow(e) { const b = e.target.closest('[data-remove]'); if (b) b.closest('.row').remove(); }
+
+// ── Phone simulator ──────────────────────────────────────
+function screenAdd(html, cls = 'line', lang) {
+  const el = document.createElement('div');
+  el.className = cls; if (lang) el.lang = lang; el.innerHTML = html;
+  $('#screen').appendChild(el); $('#screen').scrollTop = 1e6;
+}
+function showRender(r) {
+  sim.render = r; sim.entry = '';
+  for (const s of r.segments) {
+    if (s.play && s.voice) screenAdd(`<span class="voice-tag">🎙 In ${esc(s.voice)}'s voice</span>${esc(s.say)}`, 'line voiced', s.lang);
+    else if (s.play) screenAdd('🎵 Playing your recorded message', 'sys');
+    else screenAdd(esc(s.say), 'line', s.lang);
+  }
+  if ($('#speak')?.checked) playSequence(r.segments);
+  const live = !r.hangup;
+  document.querySelectorAll('[data-key]').forEach(b => b.disabled = !live);
+  $('#sim-end').disabled = !live; $('#sim-start').disabled = live;
+  $('#sim-status').textContent = live ? (r.gather?.finishOnKey ? 'Type number, then #' : 'Waiting for a key') : 'Call ended';
+  if (r.hangup) { screenAdd('Call ended. Your dashboard has been updated.', 'sys'); setTimeout(load, 600); }
+}
+async function simStart() {
+  stopPlayback();
+  $('#screen').innerHTML = '';
+  screenAdd('Ringing… picked up', 'sys');
+  try { const r = await api('/simulate/start', { method: 'POST', body: JSON.stringify({ parentId: activeId }) }); sim.checkinId = r.checkinId; showRender(r.render); }
+  catch (e) { screenAdd(esc(e.message), 'sys'); }
+}
+async function press(key) {
+  if (!sim.render || sim.render.hangup) return;
+  const g = sim.render.gather;
+  if (g?.finishOnKey) {
+    if (key !== g.finishOnKey) { sim.entry += key; let el = $('#screen .entry:last-child'); if (!el) { screenAdd('', 'entry'); el = $('#screen .entry:last-child'); } el.textContent = sim.entry; return; }
+    $('#screen .entry:last-child')?.remove();
+    screenAdd(esc((sim.entry || '') + '#'), 'me');
+    return send(sim.entry);
+  }
+  screenAdd(esc(key), 'me');
+  send(key);
+}
+async function send(digits) {
+  stopPlayback();
+  try { const r = await api('/simulate/answer', { method: 'POST', body: JSON.stringify({ checkinId: sim.checkinId, step: sim.render.step, digits }) }); showRender(r.render); }
+  catch (e) { screenAdd(esc(e.message), 'sys'); }
+}
+async function simHangup() {
+  stopPlayback();
+  try { await api('/simulate/hangup', { method: 'POST', body: JSON.stringify({ checkinId: sim.checkinId }) }); } catch (e) { toast(e.message); }
+  showRender({ step: 0, segments: [], gather: null, hangup: true });
+}
+
+// ── Audio playback (shared by the phone simulator and the voice studio) ──
+const player = { audio: new Audio(), token: 0, resolve: null, listening: false };
+function stopPlayback() {
+  player.token++;
+  player.audio.pause();
+  player.resolve?.(); player.resolve = null;
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  markPlaying(null);
+}
+function playUrl(url) {
+  return new Promise(resolve => {
+    const a = player.audio;
+    player.resolve = resolve;
+    a.onended = a.onerror = () => resolve();
+    a.src = url;
+    a.play().catch(() => resolve());
+  });
+}
+function speakText(text, lang) {
+  return new Promise(resolve => {
+    if (!('speechSynthesis' in window) || !text) return resolve();
+    const u = new SpeechSynthesisUtterance(text); u.lang = SPEECH[lang] || 'en-IN'; u.rate = .95;
+    const done = () => { clearTimeout(t); resolve(); };
+    const t = setTimeout(done, 2500 + text.length * 110); // some browsers never fire onend
+    u.onend = u.onerror = done;
+    speechSynthesis.speak(u);
+  });
+}
+/** Play segments in order: recordings as audio, everything else with the browser's voice. */
+async function playSequence(items, onItem) {
+  stopPlayback();
+  const my = player.token;
+  for (let i = 0; i < items.length; i++) {
+    if (my !== player.token) return;
+    onItem?.(i);
+    if (items[i].play) await playUrl(items[i].play); else await speakText(items[i].say, items[i].lang);
+  }
+  if (my === player.token) onItem?.(-1);
+}
+
+// ── Family voice studio ──────────────────────────────────
+// A son or daughter records the call's lines; the parent then hears them instead of a stranger.
+let studio = { voiceId: null, creating: false, editing: false, confirmDelete: null, moreOpen: false };
+let rec = null; // the recording in progress
+let pollTimer = null;
+
+const ICON = {
+  mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+  stop: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor"/></svg>',
+  play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" fill="currentColor"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5" width="4" height="14" rx="1.2" fill="currentColor"/><rect x="13.5" y="5" width="4" height="14" rx="1.2" fill="currentColor"/></svg>',
+  headphones: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="5" height="7" rx="2"/><rect x="16" y="14" width="5" height="7" rx="2"/></svg>',
+};
+
+const voicesOf = (p) => p?.voices || [];
+const whoOf = (p) => p.relation && p.relation !== 'Parent' ? p.relation : p.name;
+const currentVoice = () => voicesOf(parent()).find(v => v.id === studio.voiceId);
+const fmtSec = (ms) => { const t = Math.round(ms / 1000); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
+const takeEl = (key) => $(`#studio [data-take="${CSS.escape(key)}"]`);
+
+function voiceLine(p) {
+  const active = voicesOf(p).find(v => v.active);
+  if (active) return `<p class="voice-on">🎙 Calls to ${esc(whoOf(p))} are in ${esc(active.speakerName)}'s voice · <a href="#studio">${active.progress.done} of ${active.progress.total} lines recorded</a></p>`;
+  if (offline) return '';
+  return `<a class="voice-nudge" href="#studio">🎙 Let ${esc(whoOf(p))} hear your voice on the next call →</a>`;
+}
+
+function waveSvg(peaks = []) {
+  const w = 168, h = 26, bw = w / Math.max(1, peaks.length);
+  return `<svg class="wave" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">${peaks.map((p, i) => {
+    const bh = Math.max(2, p * (h - 2));
+    return `<rect x="${(i * bw + bw * .2).toFixed(1)}" y="${((h - bh) / 2).toFixed(1)}" width="${(bw * .6).toFixed(1)}" height="${bh.toFixed(1)}" rx="1"/>`;
+  }).join('')}</svg>`;
+}
+
+function avatar(v) {
+  const r = 24, C = 2 * Math.PI * r;
+  const f = v.progress.essential ? v.progress.essentialDone / v.progress.essential : 0;
+  const initial = Array.from((v.speakerName || '?').trim())[0]?.toUpperCase() || '?';
+  return `<span class="avatar">${esc(initial)}<svg viewBox="0 0 54 54" aria-hidden="true"><circle class="track" cx="27" cy="27" r="${r}"/><circle class="fill" cx="27" cy="27" r="${r}" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - f)).toFixed(1)}"/></svg></span>`;
+}
+
+function renderStudio() {
+  const el = $('#studio');
+  const p = parent();
+  if (!el || !p) return;
+  const list = voicesOf(p);
+  if (!list.some(v => v.id === studio.voiceId)) studio.voiceId = (list.find(v => v.active) || list[0])?.id || null;
+  const creating = !offline && (studio.creating || !list.length);
+  const v = currentVoice();
+  const anyActive = list.some(x => x.active);
+  el.innerHTML = `
+  <div class="studio-head">
+    <span class="eyebrow">Family voice</span>
+    <h2>Calls in your own voice</h2>
+    <p class="muted">Record a few short lines once. From then on, ${esc(whoOf(p))} hears <em>your</em> voice asking about their tablets${p.askMeal ? ' and meals' : ''} on every call, not a stranger's.</p>
+  </div>
+  <div class="studio-grid">
+    <div class="speakers">
+      <p class="lbl">Voices for ${esc(whoOf(p))}</p>
+      <div class="speaker" style="cursor:default"><span class="avatar std">♪</span><span><b>Standard voice</b><small>${anyActive ? 'Fills in lines not recorded' : 'On calls now'}</small></span></div>
+      ${list.map(x => `<button class="speaker" data-voice="${x.id}" aria-current="${!creating && x.id === studio.voiceId}">${avatar(x)}<span><b>${esc(x.speakerName)}</b><small>${x.progress.done} of ${x.progress.total} lines</small>${x.active ? '<span class="on-calls">On calls</span>' : ''}</span></button>`).join('')}
+      ${list.length < 4 && !offline ? `<button class="speaker add" data-new-voice aria-current="${creating}">+ ${list.length ? 'Add another voice' : 'Record your voice'}</button>` : ''}
+    </div>
+    <div class="booth">${creating ? createForm(p) : v ? booth(p, v) : '<p class="empty">Start the server to record voices.</p>'}</div>
+  </div>`;
+  bindStudio();
+}
+
+function createForm(p) {
+  const first = !voicesOf(p).length;
+  return `${first ? `<ol class="how">
+      <li><b>1</b>Record a few short lines in your own voice. It takes about two minutes.</li>
+      <li><b>2</b>Listen back, then switch your voice on for ${esc(whoOf(p))}'s calls.</li>
+      <li><b>3</b>${esc(whoOf(p))} hears you on every call. Lines you skip use the standard voice.</li>
+    </ol>` : '<h3 style="font-size:1.4rem;margin-bottom:14px">Add another voice</h3>'}
+    <form class="form" id="voice-form">
+      <div class="field"><label for="v-name">Your name</label><input id="v-name" name="speakerName" required maxlength="40" value="${first ? esc(data.family.childName) : ''}" placeholder="Ravi"></div>
+      <div class="field"><label for="v-call">You call them</label><input id="v-call" name="callsThem" maxlength="30" value="${esc(whoOf(p))}" placeholder="Amma"><span class="hint">Used in the lines we suggest you say.</span></div>
+      <div class="field"><label for="v-rel">You are their</label><input id="v-rel" name="relation" maxlength="20" placeholder="Son, daughter, grandchild…"></div>
+      <label class="check" style="grid-column:1/-1;align-items:flex-start"><input type="checkbox" name="consent" required style="margin-top:3px"> <span>This is my own voice, and I agree to it being used on ${esc(whoOf(p))}'s check-in calls. I can delete it at any time.</span></label>
+      <div class="actions"><button class="btn btn-haldi" type="submit" style="gap:8px">${ICON.mic} Start recording</button>${first ? '' : '<button class="btn btn-soft" type="button" data-cancel-create>Cancel</button>'}</div>
+    </form>`;
+}
+
+function booth(p, v) {
+  const ess = v.lines.filter(l => l.essential), extra = v.lines.filter(l => !l.essential);
+  const pr = v.progress, ready = pr.essentialDone === pr.essential;
+  return `
+  <div class="booth-head">
+    <div class="booth-who">${avatar(v)}<div><h3>${esc(v.speakerName)}'s voice</h3><small>${v.relation ? esc(v.relation) + ' · ' : ''}says “${esc(v.callsThem)}” · <button class="linkish" data-edit-voice>${studio.editing ? 'Close' : 'Edit'}</button></small></div></div>
+    <label class="switch"><input type="checkbox" data-use-voice ${v.active ? 'checked' : ''} ${offline ? 'disabled' : ''}> ${v.active ? `On ${esc(whoOf(p))}'s calls` : `Use on ${esc(whoOf(p))}'s calls`}</label>
+  </div>
+  ${studio.editing ? `<form class="edit-voice" id="edit-voice">
+    <div class="field"><label for="ev-name">Your name</label><input id="ev-name" name="speakerName" value="${esc(v.speakerName)}" maxlength="40" required></div>
+    <div class="field"><label for="ev-call">You call them</label><input id="ev-call" name="callsThem" value="${esc(v.callsThem)}" maxlength="30"></div>
+    <button class="btn" type="submit">Save</button></form>` : ''}
+  <div class="progress" aria-hidden="true">${ess.map(l => `<i class="${l.clip ? (l.clip.source === 'adapted' ? 'adapted' : 'done') : ''}"></i>`).join('')}</div>
+  <div class="progress-line"><span><b>${pr.essentialDone} of ${pr.essential}</b> main lines ${ready ? 'ready ✓' : 'recorded'}</span>
+    ${pr.done ? `<button class="btn btn-soft" data-listen style="gap:8px">${ICON.headphones}<span>${player.listening ? 'Stop' : 'Listen in call order'}</span></button>` : ''}</div>
+  ${ready && !v.active ? `<div class="tip" style="background:var(--leaf-wash)"><span>✓</span><span>The main lines are done. Turn on <b>Use on ${esc(whoOf(p))}'s calls</b> above, then try the call on the phone to hear it.</span></div>`
+    : `<div class="tip">${ICON.headphones}<span>Find a quiet spot and speak slowly and warmly, as if ${esc(v.callsThem)} were on the line. Use your own words if you like, but keep the “press 1 / press 2” part so they know what to do.</span></div>`}
+  <ol class="takes">${ess.map((l, i) => take(l, i + 1, p)).join('')}</ol>
+  ${extra.length ? `<details class="more" ${studio.moreOpen ? 'open' : ''}><summary>Make the whole call sound like you <span>· ${extra.filter(l => l.clip).length} of ${extra.length} extra lines</span></summary><ol class="takes">${extra.map((l, i) => take(l, ess.length + i + 1, p)).join('')}</ol></details>` : ''}
+  ${adaptBox(v)}
+  <div class="booth-foot"><span>Recorded with ${esc(v.speakerName)}'s consent on ${fmtDay(v.consentAt.slice(0, 10))}. Kept private to your family.</span>
+    ${offline ? '' : `<button class="linkish danger" data-delete-voice>${studio.confirmDelete === v.id ? 'Click again to delete for good' : 'Delete this voice'}</button>`}</div>`;
+}
+
+function take(l, n, p) {
+  const state = l.clip ? (l.clip.source === 'adapted' ? 'adapted' : 'has') : '';
+  const chip = l.stale ? '<span class="chip bad">Medicine renamed · record again</span>'
+    : !l.clip ? '<span class="chip miss">Standard voice for now</span>'
+    : l.clip.source === 'adapted' ? '<span class="chip ad">Adapted voice</span>'
+    : '<span class="chip ok">Your voice</span>';
+  return `<li class="take ${state}" data-take="${esc(l.clipKey)}">
+    <span class="take-num">${l.clip ? '✓' : n}</span>
+    <div style="min-width:0">
+      <div class="take-label">${esc(l.label)} ${chip}</div>
+      <p class="script" lang="${esc(p.language)}">${esc(l.text)}</p>
+      ${l.hint ? `<p class="hint-en">${esc(l.hint)}</p>` : ''}
+      <div class="take-wave">${l.clip ? `${waveSvg(l.clip.peaks)}<span>${fmtSec(l.clip.durationMs)}</span>` : ''}</div>
+    </div>
+    <div class="take-actions">
+      ${l.clip ? `<button class="round" data-play-take="${esc(l.clipKey)}" aria-label="Play: ${esc(l.label)}">${ICON.play}</button>` : ''}
+      <button class="round rec" data-rec="${esc(l.clipKey)}" aria-label="${l.clip ? 'Record again' : 'Record'}: ${esc(l.label)}" ${offline ? 'disabled' : ''}>${ICON.mic}</button>
+    </div></li>`;
+}
+
+function adaptBox(v) {
+  const st = v.clone?.status || 'none';
+  if (!data.voiceAdaptation) {
+    return data.demoMode ? `<div class="adapt-box"><p><b>Fill the gaps in your voice</b>With voice adaptation turned on, lines you skip, new medicines and your typed messages are spoken in your voice too. <span class="muted">(Server setting: ELEVENLABS_API_KEY.)</span></p></div>` : '';
+  }
+  if (st === 'training' || st === 'filling') {
+    return `<div class="adapt-box"><p><b><span class="spinner"></span>${st === 'training' ? 'Learning your voice…' : 'Speaking the remaining lines in your voice…'}</b>This takes about a minute. You can keep recording while you wait.</p></div>`;
+  }
+  if (st === 'ready') {
+    return `<div class="adapt-box"><p><b>✓ Your voice is adapted</b>Lines you haven't recorded, new medicines and your typed messages are spoken in your voice.</p><button class="btn btn-soft" data-adapt="retrain">Update from my latest recordings</button></div>`;
+  }
+  const failed = st === 'failed';
+  return `<div class="adapt-box"><p><b>${failed ? "Voice adaptation didn't work" : 'Fill the gaps in your voice'}</b>${failed ? esc(v.clone.error || 'Please try again.') : `We learn your voice from your recordings, then use it for lines you skip, new medicines and your typed messages.${v.canAdapt ? '' : ' Record at least 3 lines (about 10 seconds) first.'}`}</p><button class="btn btn-haldi" data-adapt ${v.canAdapt ? '' : 'disabled'}>${failed ? 'Try again' : 'Adapt my voice'}</button></div>`;
+}
+
+function bindStudio() {
+  const el = $('#studio');
+  el.querySelectorAll('[data-voice]').forEach(b => b.onclick = () => { cancelRecording(); stopPlayback(); studio = { ...studio, voiceId: b.dataset.voice, creating: false, editing: false, confirmDelete: null }; renderStudio(); });
+  el.querySelector('[data-new-voice]')?.addEventListener('click', () => { cancelRecording(); stopPlayback(); studio = { ...studio, creating: true, editing: false }; renderStudio(); });
+  el.querySelector('[data-cancel-create]')?.addEventListener('click', () => { studio.creating = false; renderStudio(); });
+  el.querySelector('#voice-form')?.addEventListener('submit', createVoice);
+  el.querySelector('[data-edit-voice]')?.addEventListener('click', () => { studio.editing = !studio.editing; renderStudio(); });
+  el.querySelector('#edit-voice')?.addEventListener('submit', editVoice);
+  el.querySelector('[data-use-voice]')?.addEventListener('change', (e) => useVoice(e.target.checked));
+  el.querySelectorAll('[data-rec]').forEach(b => b.onclick = () => rec?.key === b.dataset.rec ? stopRecording() : startRecording(b.dataset.rec));
+  el.querySelectorAll('[data-play-take]').forEach(b => b.onclick = () => playTake(b.dataset.playTake));
+  el.querySelector('[data-listen]')?.addEventListener('click', listenAll);
+  el.querySelector('[data-adapt]')?.addEventListener('click', (e) => adaptVoice(e.currentTarget.dataset.adapt === 'retrain'));
+  el.querySelector('[data-delete-voice]')?.addEventListener('click', deleteVoice);
+  el.querySelector('details.more')?.addEventListener('toggle', (e) => { studio.moreOpen = e.target.open; });
+  schedulePoll();
+}
+
+function replaceVoice(view) {
+  const p = data.parents.find(x => x.id === view.parentId);
+  if (!p) return;
+  p.voices ||= [];
+  const i = p.voices.findIndex(v => v.id === view.id);
+  if (i >= 0) p.voices[i] = view; else p.voices.push(view);
+  if (!rec) renderStudio();
+}
+
+async function createVoice(e) {
+  e.preventDefault();
+  const f = e.target;
+  try {
+    const v = await api('/voices', { method: 'POST', body: JSON.stringify({ parentId: activeId, speakerName: f.speakerName.value, callsThem: f.callsThem.value, relation: f.relation.value, consent: f.consent.checked }) });
+    studio = { ...studio, voiceId: v.id, creating: false };
+    replaceVoice(v);
+    toast('Press the red button next to each line to record it');
+    $('#studio .takes')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  } catch (ex) { toast(ex.message); }
+}
+
+async function editVoice(e) {
+  e.preventDefault();
+  try {
+    const v = await api(`/voices/${studio.voiceId}`, { method: 'PATCH', body: JSON.stringify({ speakerName: e.target.speakerName.value, callsThem: e.target.callsThem.value }) });
+    studio.editing = false;
+    replaceVoice(v);
+    toast('Saved. The suggested lines now use the new name.');
+  } catch (ex) { toast(ex.message); }
+}
+
+async function useVoice(on) {
+  const v = currentVoice(), p = parent();
+  try {
+    await api(`/parents/${p.id}`, { method: 'PATCH', body: JSON.stringify({ voiceId: on ? v.id : null }) });
+    toast(on ? `${whoOf(p)}'s calls will now be in ${v.speakerName}'s voice` : `${whoOf(p)}'s calls are back to the standard voice`);
+    await load();
+  } catch (ex) { toast(ex.message); renderStudio(); }
+}
+
+async function deleteVoice() {
+  const v = currentVoice();
+  if (studio.confirmDelete !== v.id) {
+    studio.confirmDelete = v.id;
+    renderStudio();
+    setTimeout(() => { if (studio.confirmDelete === v.id) { studio.confirmDelete = null; if (!rec) renderStudio(); } }, 4000);
+    return;
+  }
+  try {
+    stopPlayback();
+    await api(`/voices/${v.id}`, { method: 'DELETE' });
+    studio = { ...studio, voiceId: null, confirmDelete: null };
+    toast(`${v.speakerName}'s voice was deleted`);
+    await load();
+  } catch (ex) { toast(ex.message); }
+}
+
+async function adaptVoice(retrain) {
+  try { replaceVoice(await api(`/voices/${studio.voiceId}/adapt`, { method: 'POST', body: JSON.stringify({ retrain }) })); }
+  catch (ex) { toast(ex.message); }
+}
+
+// While a voice is being adapted, refresh until it's done.
+function schedulePoll() {
+  clearTimeout(pollTimer);
+  const busy = voicesOf(parent()).some(v => ['training', 'filling'].includes(v.clone?.status));
+  if (!busy || offline) return;
+  pollTimer = setTimeout(async () => {
+    if (rec) return schedulePoll();
+    try { data = await api('/family'); } catch { /* try again next time */ }
+    renderStudio();
+  }, 3000);
+}
+
+// Playback in the studio
+function markPlaying(key) {
+  document.querySelectorAll('#studio .take.playing').forEach(el => {
+    el.classList.remove('playing');
+    const b = el.querySelector('[data-play-take]'); if (b) b.innerHTML = ICON.play;
+  });
+  if (!key) { setListenLabel(false); return; }
+  const li = takeEl(key);
+  li?.classList.add('playing');
+  const b = li?.querySelector('[data-play-take]'); if (b) b.innerHTML = ICON.pause;
+}
+function setListenLabel(on) {
+  player.listening = on;
+  const s = $('#studio [data-listen] span'); if (s) s.textContent = on ? 'Stop' : 'Listen in call order';
+}
+function playTake(key) {
+  const l = currentVoice()?.lines.find(x => x.clipKey === key);
+  if (!l?.clip) return;
+  const wasPlaying = takeEl(key)?.classList.contains('playing');
+  stopPlayback();
+  if (!wasPlaying) playSequence([{ play: l.clip.url }], (i) => markPlaying(i === 0 ? key : null));
+}
+function listenAll() {
+  if (player.listening) { stopPlayback(); return; }
+  const items = (currentVoice()?.lines || []).filter(l => l.clip);
+  playSequence(items.map(l => ({ play: l.clip.url })), (i) => {
+    markPlaying(i >= 0 ? items[i].clipKey : null);
+    if (i >= 0) { setListenLabel(true); takeEl(items[i].clipKey)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  });
+}
+
+// Recording
+async function startRecording(key) {
+  if (rec) await stopRecording();
+  stopPlayback();
+  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) return toast('This browser cannot record audio. Please try Chrome, Edge or Safari.');
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
+  } catch {
+    return toast(window.isSecureContext ? 'Please allow the microphone so you can record your voice.' : 'Recording needs a secure (https) link.');
+  }
+  const li = takeEl(key);
+  if (!li) { stream.getTracks().forEach(t => t.stop()); return; }
+  const mr = new MediaRecorder(stream);
+  const chunks = [];
+  mr.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const analyser = ctx.createAnalyser();
+  analyser.fftSize = 512;
+  ctx.createMediaStreamSource(stream).connect(analyser);
+  rec = { key, voiceId: studio.voiceId, stream, mr, chunks, ctx, li, startedAt: performance.now(), raf: 0 };
+
+  li.classList.add('recording');
+  const btn = li.querySelector('[data-rec]');
+  btn.innerHTML = ICON.stop; btn.setAttribute('aria-label', 'Stop recording');
+  li.querySelector('.take-wave').innerHTML = `<span class="live">${'<i></i>'.repeat(28)}</span><span class="rec-time">0:00</span><span>Speak now, then press ■</span>`;
+  const bars = [...li.querySelectorAll('.live i')], time = li.querySelector('.rec-time');
+  const samples = new Uint8Array(analyser.fftSize), levels = new Array(bars.length).fill(0);
+  const r = rec;
+  const tick = () => {
+    if (rec !== r) return;
+    analyser.getByteTimeDomainData(samples);
+    let sum = 0; for (const s of samples) sum += ((s - 128) / 128) ** 2;
+    levels.push(Math.min(1, Math.sqrt(sum / samples.length) * 5)); levels.shift();
+    bars.forEach((b, i) => { b.style.height = `${3 + levels[i] * 23}px`; });
+    const ms = performance.now() - r.startedAt;
+    time.textContent = `0:${String(Math.floor(ms / 1000)).padStart(2, '0')}`;
+    if (ms > 25000) { stopRecording(); return; } // long enough for any line
+    r.raf = requestAnimationFrame(tick);
+  };
+  mr.start(250);
+  tick();
+}
+
+async function stopRecording(save = true) {
+  const r = rec;
+  if (!r) return;
+  rec = null;
+  cancelAnimationFrame(r.raf);
+  if (r.mr.state !== 'inactive') {
+    const stopped = new Promise(res => r.mr.addEventListener('stop', res, { once: true }));
+    r.mr.stop();
+    await stopped;
+  }
+  r.stream.getTracks().forEach(t => t.stop());
+  r.ctx.close().catch(() => {});
+  if (!save) return;
+  r.li.classList.remove('recording');
+  r.li.classList.add('saving');
+  r.li.querySelector('.take-wave').innerHTML = '<span><span class="spinner"></span>Cleaning up and saving…</span>';
+  try {
+    const wav = await toPhoneWav(new Blob(r.chunks, { type: r.mr.mimeType || 'audio/webm' }));
+    const res = await fetch(`/api/voices/${r.voiceId}/clips/${encodeURIComponent(r.key)}`, { method: 'PUT', headers: { 'Content-Type': 'audio/wav', 'x-family-key': KEY }, body: wav });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.error || 'Could not save the recording');
+    replaceVoice(json);
+    toast('Saved. Press ▶ to hear it.');
+  } catch (e) {
+    toast(e.message);
+    if (!rec) renderStudio();
+  }
+}
+function cancelRecording() { if (rec) stopRecording(false); }
+
+/**
+ * Turn a browser recording into a phone-ready clip: mono 16 kHz WAV, silence trimmed,
+ * volume evened out (phone lines are quiet and many parents are hard of hearing).
+ */
+async function toPhoneWav(blob) {
+  const RATE = 16000;
+  const ac = new (window.AudioContext || window.webkitAudioContext)();
+  let decoded;
+  try { decoded = await ac.decodeAudioData(await blob.arrayBuffer()); }
+  catch { throw new Error('Could not read the recording. Please try again.'); }
+  finally { ac.close().catch(() => {}); }
+  const off = new OfflineAudioContext(1, Math.max(1, Math.ceil(decoded.duration * RATE)), RATE);
+  const src = off.createBufferSource();
+  src.buffer = decoded; src.connect(off.destination); src.start();
+  const pcm = (await off.startRendering()).getChannelData(0);
+
+  const win = RATE / 50, rms = [];
+  let loud = 0;
+  for (let w = 0; (w + 1) * win <= pcm.length; w++) {
+    let s = 0;
+    for (let i = w * win; i < (w + 1) * win; i++) s += pcm[i] * pcm[i];
+    const r = Math.sqrt(s / win); rms.push(r); loud = Math.max(loud, r);
+  }
+  const thresh = Math.max(0.008, loud * 0.1);
+  const first = rms.findIndex(r => r > thresh), last = rms.findLastIndex(r => r > thresh);
+  if (first < 0 || loud < 0.01) throw new Error("We couldn't hear anything. Check your microphone and try again.");
+  const clip = pcm.subarray(Math.max(0, first * win - RATE * 0.15), Math.min(pcm.length, (last + 1) * win + RATE * 0.3));
+  if (clip.length < RATE * 0.4) throw new Error('That was very short. Try saying the whole line.');
+
+  let peak = 0;
+  for (const v of clip) peak = Math.max(peak, Math.abs(v));
+  const gain = Math.min(0.9 / peak, 8), fade = RATE * 0.01;
+  const out = new DataView(new ArrayBuffer(44 + clip.length * 2));
+  const str = (o, s) => [...s].forEach((c, i) => out.setUint8(o + i, c.charCodeAt(0)));
+  str(0, 'RIFF'); out.setUint32(4, 36 + clip.length * 2, true); str(8, 'WAVE');
+  str(12, 'fmt '); out.setUint32(16, 16, true); out.setUint16(20, 1, true); out.setUint16(22, 1, true);
+  out.setUint32(24, RATE, true); out.setUint32(28, RATE * 2, true); out.setUint16(32, 2, true); out.setUint16(34, 16, true);
+  str(36, 'data'); out.setUint32(40, clip.length * 2, true);
+  for (let i = 0; i < clip.length; i++) {
+    const edge = Math.min(i, clip.length - 1 - i);
+    let v = clip[i] * gain * (edge < fade ? edge / fade : 1);
+    v = Math.max(-1, Math.min(1, v));
+    out.setInt16(44 + i * 2, v < 0 ? v * 0x8000 : v * 0x7fff, true);
+  }
+  return out.buffer;
+}
+
+document.addEventListener('click', removeRow);
+load();
+</script>
+</body>
+</html>

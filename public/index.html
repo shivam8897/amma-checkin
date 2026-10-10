@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amma Check-in</title>
+<meta name="description" content="A warm phone call to your parents every morning, in their language. If something is wrong, you hear on WhatsApp right away.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Hind:wght@400;500;600&family=Hind+Guntur:wght@400;600&family=Hind+Madurai:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #fff7f0; --paper-2: #ffeddf; --sheet: #ffffff; --ink: #1c1917; --ink-soft: #6b625b;
+  --haldi: #ea580c; --haldi-deep: #c2410c; --haldi-wash: #fff0e4; --postmark: #d6342c; --postmark-wash: #fde8e6;
+  --leaf: #15803d; --leaf-wash: #e3f6e8; --line: rgba(28,25,23,.1);
+  --display: 'Plus Jakarta Sans', 'Hind', system-ui, sans-serif; --body: 'Plus Jakarta Sans', 'Hind', 'Hind Guntur', 'Hind Madurai', system-ui, sans-serif;
+  --radius-sm: 6px;
+  --radius-lg: 20px;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 1.0625rem/1.65 var(--body); -webkit-font-smoothing: antialiased; }
+a { color: inherit; }
+img, svg { display: block; }
+:focus-visible { outline: 3px solid var(--haldi); outline-offset: 3px; border-radius: 4px; }
+.wrap { width: min(1120px, 100% - 32px); margin-inline: auto; }
+
+h1, h2, h3 { font-family: var(--display); font-weight: 800; line-height: 1.08; margin: 0; letter-spacing: -.03em; }
+h1 { font-size: clamp(2.6rem, 6.4vw, 4.6rem); }
+h2 { font-size: clamp(2rem, 4.2vw, 3rem); }
+h3 { font-size: 1.5rem; }
+p { margin: 0; }
+.lede { font-size: 1.25rem; color: var(--ink-soft); max-width: 34em; }
+
+/* Airmail stripes: the one decorative motif */
+.airmail { --s: 14px; background: repeating-linear-gradient(-45deg, var(--postmark) 0 var(--s), transparent var(--s) calc(var(--s)*2), var(--ink) calc(var(--s)*2) calc(var(--s)*3), transparent calc(var(--s)*3) calc(var(--s)*4)); }
+
+/* Nav */
+.nav { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-family: var(--display); font-weight: 800; font-size: 1.3rem; letter-spacing: -.02em; }
+.brand-mark { width: 34px; height: 34px; }
+.nav-links { display: flex; gap: 28px; align-items: center; font-weight: 500; }
+.nav-links a { text-decoration: none; }
+.nav-links a:hover { text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 760px) { .nav-links a:not(.btn) { display: none; } }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 22px; border-radius: 999px; border: 0; font: 600 1rem/1 var(--body); text-decoration: none; cursor: pointer; background: var(--ink); color: var(--sheet); transition: transform .15s ease; }
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn-haldi { background: var(--haldi); color: #fff; box-shadow: 0 10px 24px -12px rgba(234,88,12,.8); }
+.btn-ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+
+/* Hero */
+.hero { display: grid; grid-template-columns: 1.05fr .95fr; gap: 56px; align-items: center; padding: 48px 0 96px; }
+.hero h1 { max-width: 11ch; }
+.hero .lede { margin-top: 22px; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+.hero-note { margin-top: 18px; font-size: .95rem; color: var(--ink-soft); }
+@media (max-width: 900px) { .hero { grid-template-columns: 1fr; gap: 40px; padding-bottom: 64px; } }
+
+/* The call transcript */
+.call { background: var(--sheet); border-radius: var(--radius-lg); padding: 22px; box-shadow: 0 1px 0 var(--line), 0 24px 48px -28px rgba(124,45,18,.4); position: relative; }
+.call-head { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px dashed var(--line); }
+.call-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--haldi); display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 1.2rem; color: #fff; }
+.call-who { line-height: 1.25; }
+.call-who strong { display: block; font-weight: 600; }
+.call-who span { font-size: .9rem; color: var(--ink-soft); }
+.call-live { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: .9rem; color: var(--leaf); font-weight: 600; }
+.call-live i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse 1.6s infinite; }
+@keyframes pulse { 50% { opacity: .3; } }
+.turns { list-style: none; margin: 0; padding: 16px 0 0; display: grid; gap: 12px; min-height: 360px; }
+.turn { opacity: 0; transform: translateY(6px); transition: opacity .45s ease, transform .45s ease; }
+.turn.on { opacity: 1; transform: none; }
+.bot p.te { font-family: 'Hind Guntur', var(--body); font-size: 1.05rem; line-height: 1.6; }
+.bot p.en { font-size: .88rem; color: var(--ink-soft); margin-top: 2px; }
+.key { justify-self: end; display: flex; align-items: center; gap: 10px; font-size: .92rem; color: var(--ink-soft); }
+.key b { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: var(--paper); color: var(--ink); font-size: 1.15rem; box-shadow: inset 0 -3px 0 var(--line); }
+.whats { margin-top: 4px; background: #e7f5e9; color: #183b23; border-radius: 12px 12px 12px 4px; padding: 10px 14px; font-size: .92rem; line-height: 1.45; }
+.whats small { display: block; opacity: .7; margin-top: 4px; }
+@media (prefers-reduced-motion: reduce) { .turn { opacity: 1; transform: none; transition: none; } .call-live i { animation: none; } }
+
+/* Sections */
+section { padding: 88px 0; }
+.band { background: var(--sheet); }
+.sec-head { max-width: 40em; margin-bottom: 48px; }
+.sec-head p { margin-top: 14px; color: var(--ink-soft); font-size: 1.15rem; }
+
+/* Why phone, not app */
+.why { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
+.why h3 { margin-bottom: 10px; }
+.why p { color: var(--ink-soft); }
+.why svg { width: 44px; height: 44px; margin-bottom: 18px; color: var(--haldi-deep); }
+@media (max-width: 820px) { .why { grid-template-columns: 1fr; gap: 32px; } }
+
+/* Call steps (real sequence) */
+.steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 0; counter-reset: step; border-top: 1px solid var(--line); }
+.steps li { counter-increment: step; display: grid; grid-template-columns: 72px 1fr 1.2fr; gap: 24px; padding: 26px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+.steps li::before { content: counter(step); font-family: var(--display); font-weight: 800; font-size: 2.2rem; color: var(--haldi-deep); line-height: 1; }
+.steps h3 { font-size: 1.35rem; }
+.steps p { color: var(--ink-soft); }
+@media (max-width: 760px) { .steps li { grid-template-columns: 48px 1fr; } .steps li p { grid-column: 2; } }
+
+/* Alerts + letter */
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
+@media (max-width: 900px) { .pair { grid-template-columns: 1fr; } }
+.alerts { display: grid; gap: 14px; }
+.wa { background: var(--sheet); border-radius: 14px 14px 14px 4px; padding: 14px 16px; box-shadow: 0 1px 0 var(--line); max-width: 420px; }
+.wa.urgent { border-left: 4px solid var(--postmark); }
+.wa strong { display: block; }
+.wa p { color: var(--ink-soft); font-size: .95rem; margin-top: 2px; }
+.wa time { display: block; font-size: .8rem; color: var(--ink-soft); margin-top: 6px; }
+.alert-copy ul { padding-left: 1.1em; margin: 18px 0 0; color: var(--ink-soft); }
+.alert-copy li { margin: 6px 0; }
+
+.letter { position: relative; background: #fffaf5; color: var(--ink); padding: 34px 34px 30px; border-radius: 4px; box-shadow: 0 18px 40px -26px rgba(124,45,18,.45); transform: rotate(-1deg); border: 1px solid var(--line); }
+.letter::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 8px; border-radius: 4px 4px 0 0; background: linear-gradient(90deg, var(--haldi), #fb923c 60%, #fed7aa); }
+.letter .stamp { position: absolute; top: 22px; right: 22px; width: 70px; height: 84px; background: var(--haldi); border: 3px dotted #fffaf5; outline: 2px solid var(--haldi-deep); display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 1.6rem; color: #fff; transform: rotate(4deg); }
+.letter .postmark { position: absolute; top: 50px; right: 70px; width: 92px; height: 92px; border: 2px solid rgba(234,88,12,.7); border-radius: 50%; display: grid; place-items: center; text-align: center; font-size: .7rem; line-height: 1.2; color: rgba(194,65,12,.9); transform: rotate(-14deg); font-weight: 600; }
+.letter h3 { font-size: 1.6rem; margin: 0 0 16px; max-width: 12em; }
+.letter dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 18px; font-size: 1rem; }
+.letter dt { font-weight: 600; }
+.letter dd { margin: 0; }
+.letter .sign { margin-top: 20px; font-style: italic; }
+.ruled { background-image: repeating-linear-gradient(transparent 0 31px, rgba(234,88,12,.12) 31px 32px); }
+
+/* Extras grid */
+.extras { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 56px; }
+.extras div { padding: 22px 0; border-top: 1px solid var(--line); }
+.extras h3 { font-family: var(--body); font-weight: 600; font-size: 1.1rem; margin-bottom: 4px; }
+.extras p { color: var(--ink-soft); }
+@media (max-width: 760px) { .extras { grid-template-columns: 1fr; } }
+
+/* Pricing */
+.toggle { display: inline-flex; background: var(--paper-2); border-radius: 999px; padding: 4px; margin-bottom: 32px; }
+.toggle button { border: 0; background: transparent; padding: 9px 18px; border-radius: 999px; font: 600 .95rem var(--body); color: var(--ink-soft); cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--sheet); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.plan { background: var(--sheet); border-radius: var(--radius-lg); padding: 28px; display: flex; flex-direction: column; gap: 14px; border: 1.5px solid transparent; }
+.plan.pick { border-color: var(--haldi); }
+.plan .tag { align-self: flex-start; background: var(--haldi); color: #fff; font-weight: 600; font-size: .82rem; padding: 3px 10px; border-radius: 999px; }
+.plan .price { font-family: var(--display); font-weight: 800; letter-spacing: -.03em; color: var(--haldi-deep); font-size: 2.8rem; line-height: 1; }
+.plan .price small { font-family: var(--body); font-size: 1rem; color: var(--ink-soft); }
+.plan ul { padding-left: 1.1em; margin: 0; color: var(--ink-soft); flex: 1; }
+.plan li { margin: 4px 0; }
+@media (max-width: 900px) { .plans { grid-template-columns: 1fr; } }
+
+/* FAQ */
+.faq { max-width: 780px; }
+.faq details { border-top: 1px solid var(--line); padding: 18px 0; }
+.faq details:last-child { border-bottom: 1px solid var(--line); }
+.faq summary { cursor: pointer; font-weight: 600; font-size: 1.1rem; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+.faq summary::after { content: '+'; font-family: var(--display); font-size: 1.5rem; line-height: 1; color: var(--haldi-deep); transition: transform .2s; }
+.faq details[open] summary::after { transform: rotate(45deg); }
+.faq p { margin-top: 10px; color: var(--ink-soft); }
+
+/* Sign-up */
+.signup-card { position: relative; background: var(--sheet); border-radius: var(--radius-lg); padding: 10px; }
+.signup-card .airmail { position: absolute; inset: 0; border-radius: var(--radius-lg); opacity: .9; }
+.signup-inner { position: relative; background: var(--sheet); border-radius: 12px; padding: clamp(22px, 4vw, 44px); }
+.form { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 22px; margin-top: 28px; }
+.form fieldset { grid-column: 1 / -1; border: 0; padding: 0; margin: 10px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 22px; }
+.form legend { font-family: var(--display); font-size: 1.4rem; margin-bottom: 4px; padding: 0; }
+.field { display: grid; gap: 6px; }
+.field.full { grid-column: 1 / -1; }
+.field label { font-weight: 600; font-size: .95rem; }
+.field .hint { font-size: .85rem; color: var(--ink-soft); }
+.field input, .field select { font: inherit; color: var(--ink); background: var(--paper); border: 1.5px solid transparent; border-radius: 10px; padding: 11px 14px; min-height: 48px; width: 100%; }
+.field input:focus, .field select:focus { outline: none; border-color: var(--haldi); background: var(--sheet); }
+.check { display: flex; gap: 10px; align-items: flex-start; grid-column: 1 / -1; font-size: .95rem; }
+.check input { width: 20px; height: 20px; margin-top: 3px; accent-color: var(--ink); }
+.form-foot { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-top: 8px; }
+.form-error { color: var(--postmark); font-weight: 600; }
+.success { display: none; text-align: left; }
+.success.on { display: block; }
+.success h3 { font-size: 2rem; margin-bottom: 10px; }
+.success p { color: var(--ink-soft); margin-bottom: 18px; }
+@media (max-width: 680px) { .form, .form fieldset { grid-template-columns: 1fr; } }
+
+footer { padding: 48px 0 64px; color: var(--ink-soft); font-size: .92rem; }
+footer .wrap { display: grid; gap: 12px; }
+footer .row { display: flex; flex-wrap: wrap; gap: 24px; justify-content: space-between; align-items: center; }
+</style>
+</head>
+<body>
+
+<header class="wrap nav">
+  <a class="brand" href="#top" aria-label="Amma Check-in home">
+    <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="var(--haldi)"/><path d="M13 12c1.6 0 2.4 3.7 2.4 5 0 1.4-1.6 1.6-1.6 2.6 0 2.2 3.4 5.6 5.6 5.6 1 0 1.2-1.6 2.6-1.6 1.3 0 5 .8 5 2.4 0 2-2.6 3.5-4.6 3.5C16.6 29.5 10.5 23.4 10.5 17c0-2 1-5 2.5-5z" fill="#fff"/></svg>
+    Amma Check-in
+  </a>
+  <nav class="nav-links" aria-label="Main">
+    <a href="#how">How it works</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#faq">Questions</a>
+    <a class="btn btn-ghost" href="/dashboard.html?key=demo">See the dashboard</a>
+  </nav>
+</header>
+
+<main id="top">
+  <div class="wrap hero">
+    <div>
+      <h1>Every morning, someone calls Amma.</h1>
+      <p class="lede">A warm phone call to your parents each day, in Telugu, Hindi, Tamil or English. Did they take their tablets? How are they feeling? If anything is wrong, you know on WhatsApp within seconds.</p>
+      <div class="hero-actions">
+        <a class="btn btn-haldi" href="#start">Start a free 7-day trial</a>
+        <a class="btn btn-ghost" href="#how">Hear how a call goes</a>
+      </div>
+      <p class="hero-note">Works on any phone, even a basic keypad one. Nothing for your parents to install.</p>
+    </div>
+
+    <div class="call" aria-label="Example of a morning call, transcribed">
+      <div class="call-head">
+        <div class="call-avatar" aria-hidden="true">ల</div>
+        <div class="call-who"><strong>Calling Lakshmi garu</strong><span>Hyderabad, 8:30 am</span></div>
+        <div class="call-live"><i aria-hidden="true"></i>On call</div>
+      </div>
+      <ol class="turns" id="turns">
+        <li class="turn bot"><p class="te" lang="te">నమస్కారం లక్ష్మి గారు. మీ యోగక్షేమాలు తెలుసుకోవడానికి రవి ఈ కాల్ ఏర్పాటు చేశారు.</p><p class="en">Namaskaram Lakshmi garu. Ravi set up this call to check on you.</p></li>
+        <li class="turn bot"><p class="te" lang="te">మీరు మెట్‌ఫార్మిన్ వేసుకున్నారా? అవును అయితే 1 నొక్కండి.</p><p class="en">Have you taken your Metformin? Press 1 for yes.</p></li>
+        <li class="turn key">Amma pressed <b>1</b></li>
+        <li class="turn bot"><p class="te" lang="te">ఈ రోజు మీకు ఎలా ఉంది? ఒంట్లో బాగోలేకపోతే 3 నొక్కండి.</p><p class="en">How are you feeling today? Press 3 if you're not well.</p></li>
+        <li class="turn key">Amma pressed <b>3</b></li>
+        <li class="turn"><div class="whats"><strong>Lakshmi said she is not feeling well</strong>A quick call from you would mean a lot.<small>WhatsApp to Ravi in San Jose, 8:32 am</small></div></li>
+      </ol>
+    </div>
+  </div>
+
+  <section class="band" id="why">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Built for parents who don't use apps</h2>
+        <p>Your father won't open a health app. But he has answered the phone every day of his life.</p>
+      </div>
+      <div class="why">
+        <div>
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="14" y="4" width="20" height="40" rx="4"/><path d="M20 12h8M19 22h2M27 22h2M19 29h2M27 29h2M19 36h2M27 36h2"/></svg>
+          <h3>Any phone works</h3>
+          <p>A landline, a basic keypad phone or a smartphone. They answer and press a number, that's all.</p>
+        </div>
+        <div>
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M8 10h22v16H18l-6 6v-6H8z"/><path d="M30 18h10v14h-4v5l-5-5h-9v-6"/></svg>
+          <h3>Their own language</h3>
+          <p>Every call speaks to them the way family does, by the name they like, in Telugu, Hindi, Tamil or English.</p>
+        </div>
+        <div>
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M24 6c8 0 14 6 14 14 0 10-14 22-14 22S10 30 10 20c0-8 6-14 14-14z"/><path d="M18 21l4 4 8-8"/></svg>
+          <h3>You stay close</h3>
+          <p>No more wondering at your desk in Bengaluru or Dubai. If something is off, your phone tells you first.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>How one call goes</h2>
+        <p>About 60 seconds, at the time you choose. If they miss it, we try again after 15 minutes.</p>
+      </div>
+      <ol class="steps">
+        <li><h3>A familiar greeting</h3><p>We greet them by name and say you asked us to call. The first call asks for their permission, and they can stop calls anytime by pressing 0.</p></li>
+        <li><h3>One question per medicine</h3><p>"Have you taken your BP tablet?" Press 1 for yes, 2 for no. If they haven't, we gently remind them and tell you.</p></li>
+        <li><h3>How are you feeling?</h3><p>Good, okay, or not well. "Not well" sends you an alert immediately.</p></li>
+        <li><h3>Sugar reading, if you want it</h3><p>They type the number from their glucometer. Readings that are too high or too low reach you right away.</p></li>
+        <li><h3>A message from you</h3><p>Type a few words in your dashboard, like "Amma, I'll video call on Sunday", and we read it out in their language on the next call.</p></li>
+        <li><h3>Press 9, anytime</h3><p>If they want to talk to you, they press 9. You and your emergency contact get an urgent WhatsApp at once.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="band" id="alerts">
+    <div class="wrap pair">
+      <div class="alert-copy">
+        <h2>Silence when all is well. A message when it isn't.</h2>
+        <p class="lede" style="margin-top:14px">You only hear from us when something needs you. Urgent alerts also go to a neighbour or relative nearby, so someone can knock on the door.</p>
+        <ul>
+          <li>Pressed 9 for help</li>
+          <li>Didn't answer, even after we tried again</li>
+          <li>Said they're not feeling well</li>
+          <li>Hasn't taken a medicine</li>
+          <li>Sugar reading outside the safe range</li>
+        </ul>
+      </div>
+      <div class="alerts" aria-label="Example WhatsApp alerts">
+        <div class="wa urgent"><strong>🆘 Nanna pressed 9 and wants you to call</strong><p>Please call Venkat Rao now. Suresh uncle (neighbour) has also been told.</p><time>Today, 8:47 am</time></div>
+        <div class="wa urgent"><strong>📵 Amma didn't answer today's call</strong><p>We tried twice. Please check on her.</p><time>Yesterday, 8:51 am</time></div>
+        <div class="wa"><strong>💊 Amma hasn't taken Metformin</strong><p>We reminded her to take it now.</p><time>Tuesday, 8:33 am</time></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="letter">
+    <div class="wrap pair">
+      <div class="letter ruled" role="img" aria-label="Example weekly report written as a letter">
+        <div class="stamp" aria-hidden="true">అ</div>
+        <div class="postmark" aria-hidden="true">Sunday<br>7 pm</div>
+        <h3>Dear Ravi, here is Amma's week.</h3>
+        <dl>
+          <dt>Calls</dt><dd>Answered 13 of 14</dd>
+          <dt>Medicines</dt><dd>Taken 95% of the time</dd>
+          <dt>Mood</dt><dd>Good 5 days, unwell 1 day</dd>
+          <dt>Sugar</dt><dd>Average 139 mg/dL</dd>
+          <dt>Streak</dt><dd>6 days in a row</dd>
+        </dl>
+        <p class="sign">She felt unwell on Wednesday. A longer call this weekend might cheer her up.</p>
+      </div>
+      <div>
+        <h2>A letter every Sunday</h2>
+        <p class="lede" style="margin-top:14px">Every Sunday evening you get a short summary on WhatsApp: calls answered, medicines taken, how they felt, and readings. Your dashboard keeps every day in detail.</p>
+        <p style="margin-top:18px"><a class="btn btn-ghost" href="/dashboard.html?key=demo">Open the demo dashboard</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="more">
+    <div class="wrap">
+      <div class="sec-head"><h2>The small things that matter</h2></div>
+      <div class="extras">
+        <div><h3>Morning and evening calls</h3><p>Night-time tablets get their own short evening call.</p></div>
+        <div><h3>Both parents, one plan</h3><p>Separate calls, times and medicines for Amma and Nanna.</p></div>
+        <div><h3>The whole family in the loop</h3><p>Add your brother or sister. Everyone gets the same alerts.</p></div>
+        <div><h3>A neighbour for emergencies</h3><p>Urgent alerts also reach someone who lives close by.</p></div>
+        <div><h3>Pause while travelling</h3><p>Visiting you abroad, or in hospital? Pause calls until a date.</p></div>
+        <div><h3>Patient with them</h3><p>Rings for 30 seconds, repeats a question if they don't answer, and never talks to a voicemail box.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Less than a coffee a week</h2>
+        <p>Free for 7 days. Cancel anytime, no questions.</p>
+      </div>
+      <div class="toggle" role="group" aria-label="Where you live">
+        <button type="button" aria-pressed="true" data-cur="inr">I live in India</button>
+        <button type="button" aria-pressed="false" data-cur="usd">I live abroad</button>
+      </div>
+      <div class="plans">
+        <div class="plan">
+          <h3>One parent</h3>
+          <div class="price" data-inr="₹499" data-usd="$12">₹499 <small>/ month</small></div>
+          <ul><li>Daily morning call</li><li>Up to 8 medicines</li><li>Instant WhatsApp alerts</li><li>Sunday report</li></ul>
+          <a class="btn btn-ghost" href="#start" data-plan="solo">Choose one parent</a>
+        </div>
+        <div class="plan pick">
+          <span class="tag">Most families pick this</span>
+          <h3>Both parents</h3>
+          <div class="price" data-inr="₹799" data-usd="$19">₹799 <small>/ month</small></div>
+          <ul><li>Separate calls for each parent</li><li>Everything in One parent</li><li>Alerts to 3 family members</li><li>Emergency contact nearby</li></ul>
+          <a class="btn btn-haldi" href="#start" data-plan="couple">Choose both parents</a>
+        </div>
+        <div class="plan">
+          <h3>Care+</h3>
+          <div class="price" data-inr="₹999" data-usd="$24">₹999 <small>/ month</small></div>
+          <ul><li>Morning and evening calls</li><li>Sugar reading tracking</li><li>Messages from you read aloud</li><li>Priority support on WhatsApp</li></ul>
+          <a class="btn btn-ghost" href="#start" data-plan="care">Choose Care+</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="faq">
+    <div class="wrap faq">
+      <div class="sec-head"><h2>Questions families ask</h2></div>
+      <details><summary>Will my parents find it confusing?</summary><p>They only answer and press one number. Every question says which number to press, and if they don't press anything we ask once more, then move on.</p></details>
+      <details><summary>Does it speak like a robot?</summary><p>The voice speaks naturally in their language and calls them by the name you choose, like "Lakshmi garu" or "Amma".</p></details>
+      <details><summary>What if they don't pick up?</summary><p>We wait 15 minutes and call again. If they still don't answer, you and your emergency contact get a WhatsApp alert.</p></details>
+      <details><summary>Is this a medical or emergency service?</summary><p>No. Amma Check-in is a daily reminder and check-in. In an emergency, call 112 in India. Always follow your parents' doctor's advice.</p></details>
+      <details><summary>Who can see the information?</summary><p>Only the family members you add. We never sell data, and you can delete everything from your dashboard at any time.</p></details>
+      <details><summary>Can my parents stop the calls?</summary><p>Yes. They can press 0 on the first call, and you can pause or stop calls from your dashboard whenever you like.</p></details>
+    </div>
+  </section>
+
+  <section id="start">
+    <div class="wrap">
+      <div class="signup-card">
+        <div class="airmail" aria-hidden="true"></div>
+        <div class="signup-inner">
+          <div id="signup-area">
+            <h2>Set up Amma's first call</h2>
+            <p class="lede" style="margin-top:12px">Takes two minutes. Talk to your parents first so they know a call is coming.</p>
+            <form class="form" id="signup" novalidate>
+              <div class="field"><label for="childName">Your name</label><input id="childName" name="childName" autocomplete="given-name" required placeholder="Ravi"></div>
+              <div class="field"><label for="childPhone">Your WhatsApp number</label><input id="childPhone" name="childPhone" type="tel" autocomplete="tel" required placeholder="+919876543210"><span class="hint">With country code. Alerts come here.</span></div>
+
+              <fieldset>
+                <legend>About your parent</legend>
+                <div class="field"><label for="pName">Their name</label><input id="pName" name="pName" required placeholder="Lakshmi"></div>
+                <div class="field"><label for="pAddress">What should the call call them?</label><input id="pAddress" name="pAddress" placeholder="Lakshmi garu"><span class="hint">Amma, Aunty, Lakshmi garu… whatever feels warm.</span></div>
+                <div class="field"><label for="pPhone">Their phone number</label><input id="pPhone" name="pPhone" type="tel" required placeholder="+919900000000"></div>
+                <div class="field"><label for="pLang">Language</label>
+                  <select id="pLang" name="pLang"><option value="te">తెలుగు, Telugu</option><option value="hi">हिन्दी, Hindi</option><option value="ta">தமிழ், Tamil</option><option value="en">English</option></select></div>
+                <div class="field"><label for="pTime">Call time (India)</label><input id="pTime" name="pTime" type="time" value="08:30"></div>
+                <div class="field"><label for="pMeds">Medicines to ask about</label><input id="pMeds" name="pMeds" placeholder="Metformin, BP tablet"><span class="hint">Separate with commas. Add evening tablets later.</span></div>
+                <label class="check"><input type="checkbox" id="pSugar" name="pSugar"> Also ask for their sugar reading</label>
+              </fieldset>
+
+              <fieldset>
+                <legend>Someone nearby, for emergencies</legend>
+                <div class="field"><label for="eName">Name</label><input id="eName" name="eName" placeholder="Suresh uncle"></div>
+                <div class="field"><label for="ePhone">WhatsApp number</label><input id="ePhone" name="ePhone" type="tel" placeholder="+919900000000"><span class="hint">Optional. Only gets urgent alerts.</span></div>
+              </fieldset>
+
+              <input type="hidden" name="plan" id="plan" value="couple">
+              <label class="check"><input type="checkbox" id="consent" required> My parent knows about these calls and agrees to receive them.</label>
+              <div class="form-foot">
+                <button class="btn btn-haldi" type="submit">Start free trial</button>
+                <span class="form-error" id="err" role="alert"></span>
+              </div>
+            </form>
+          </div>
+          <div class="success" id="success" aria-live="polite">
+            <h3>You're all set.</h3>
+            <p id="success-text">The first call goes out tomorrow morning. Save your dashboard link, it's your private key.</p>
+            <div class="hero-actions" style="margin-top:0">
+              <a class="btn" id="dash-link" href="#">Open my dashboard</a>
+              <a class="btn btn-haldi" id="pay-link" href="#" hidden>Add payment</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="row">
+      <a class="brand" href="#top" style="font-size:1.2rem">Amma Check-in</a>
+      <span>Made with love for families who live far apart.</span>
+    </div>
+    <p>Amma Check-in is not a medical or emergency service. In an emergency in India, dial 112.</p>
+  </div>
+</footer>
+
+<script>
+// Hero: play the call once, line by line.
+(() => {
+  const turns = [...document.querySelectorAll('#turns .turn')];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) return turns.forEach(t => t.classList.add('on'));
+  const delays = [300, 1700, 3000, 3900, 5300, 6400];
+  turns.forEach((t, i) => setTimeout(() => t.classList.add('on'), delays[i]));
+})();
+
+// Pricing currency toggle
+let currency = 'inr';
+document.querySelectorAll('.toggle button').forEach(btn => btn.addEventListener('click', () => {
+  currency = btn.dataset.cur;
+  document.querySelectorAll('.toggle button').forEach(b => b.setAttribute('aria-pressed', b === btn));
+  document.querySelectorAll('.price').forEach(p => p.firstChild.textContent = p.dataset[currency] + ' ');
+}));
+document.querySelectorAll('[data-plan]').forEach(a => a.addEventListener('click', () => { document.getElementById('plan').value = a.dataset.plan; }));
+
+// Sign-up
+const form = document.getElementById('signup');
+const err = document.getElementById('err');
+const phone = v => v.replace(/[\s-]/g, '');
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  err.textContent = '';
+  const f = Object.fromEntries(new FormData(form));
+  if (!document.getElementById('consent').checked) return err.textContent = 'Please confirm your parent has agreed to the calls.';
+  const body = {
+    childName: f.childName, childPhone: phone(f.childPhone), plan: f.plan, currency,
+    parent: {
+      name: f.pName, addressAs: f.pAddress || f.pName, phone: phone(f.pPhone), language: f.pLang, callTime: f.pTime,
+      medicines: (f.pMeds || '').split(',').map(s => s.trim()).filter(Boolean),
+      askReading: document.getElementById('pSugar').checked ? 'sugar' : 'none',
+    },
+    emergency: f.ePhone ? { name: f.eName, phone: phone(f.ePhone) } : undefined,
+  };
+  const btn = form.querySelector('button[type=submit]');
+  btn.disabled = true; btn.textContent = 'Setting up…';
+  try {
+    const res = await fetch('/api/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Sign-up failed. Check the details and try again.');
+    document.getElementById('signup-area').hidden = true;
+    document.getElementById('success').classList.add('on');
+    document.getElementById('dash-link').href = data.dashboardUrl;
+    document.getElementById('success-text').textContent = `${body.parent.addressAs}'s first call goes out at ${body.parent.callTime} tomorrow. Bookmark your dashboard link: it's your private key.`;
+    if (data.paymentLink) { const p = document.getElementById('pay-link'); p.href = data.paymentLink; p.hidden = false; }
+  } catch (ex) {
+    err.textContent = ex.message === 'Failed to fetch' ? 'Could not reach the server. Is it running?' : ex.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Start free trial';
+  }
+});
+</script>
+</body>
+</html>
