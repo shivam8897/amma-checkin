@@ -179,7 +179,16 @@ Recording needs a secure page: `localhost` or `https://`.
 ### Step 1: Public URL
 Twilio must reach your server over HTTPS.
 - Development: `ngrok http 3000`, copy the `https://…` URL
-- Production: deploy to Railway, Render, Fly.io or a small VPS
+- Production: deploy to Render (below), Railway, Fly.io or a small VPS
+
+#### Deploy to Render
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/shivam8897/amma-checkin)
+
+`render.yaml` sets everything up: Node 22, Singapore region, health check, a random `ADMIN_TOKEN`, and auto-deploy on every push. `PUBLIC_URL` is picked up automatically from Render.
+- **Free plan** is fine for demos: the demo family is re-created on every start. But the service sleeps after ~15 idle minutes, and sign-ups and voice recordings are lost on each deploy or restart.
+- **For real families:** switch to the Starter plan, uncomment the `disk` section in `render.yaml`, and set `DATA_FILE=/var/data/db.json` and `AUDIO_DIR=/var/data/audio`.
+- Add secrets (Twilio, ElevenLabs, payment links) under **Environment** in the Render dashboard, never in the repo.
 
 ### Step 2: Twilio voice
 1. Create a Twilio account and buy a voice-capable number

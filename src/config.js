@@ -3,7 +3,8 @@ const env = process.env;
 
 const config = {
   port: Number(env.PORT || 3000),
-  publicUrl: (env.PUBLIC_URL || `http://localhost:${env.PORT || 3000}`).replace(/\/$/, ''),
+  // Render sets RENDER_EXTERNAL_URL (https://<service>.onrender.com) automatically.
+  publicUrl: (env.PUBLIC_URL || env.RENDER_EXTERNAL_URL || `http://localhost:${env.PORT || 3000}`).replace(/\/$/, ''),
   adminToken: env.ADMIN_TOKEN || 'change-me',
   dataFile: env.DATA_FILE || require('path').join(__dirname, '..', 'data', 'db.json'),
   // Recorded and adapted voice clips (WAV). Served at /audio/<random-token>.wav so Twilio can <Play> them.

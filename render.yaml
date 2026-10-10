@@ -1,0 +1,35 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# Deploy: Render dashboard → New → Blueprint → pick this repo (or use the button in README).
+#
+# Free plan notes:
+#  - The service sleeps after ~15 minutes without visits; the first visit then takes ~1 minute.
+#    While asleep, the scheduler can't place real calls.
+#  - Files on disk (data/db.json, recorded voices) are reset on every deploy and restart.
+#    The start command re-creates the demo family each time, so the demo always works.
+# For real families: switch to the Starter plan and uncomment the disk section below.
+services:
+  - type: web
+    name: amma-checkin
+    runtime: node
+    plan: free
+    region: singapore # closest to India
+    buildCommand: npm ci --omit=dev
+    startCommand: node scripts/seed.js && npm start
+    healthCheckPath: /health
+    autoDeploy: true # redeploy on every push to main
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: ADMIN_TOKEN
+        generateValue: true # random secret for /api/admin/*
+      - key: WHATSAPP_PROVIDER
+        value: console
+      # Add these in the Render dashboard when you go live (they stay secret there):
+      #   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_CALLER_ID, ELEVENLABS_API_KEY
+      #   PAYMENT_LINK_INR, PAYMENT_LINK_USD
+    # Persistent storage (Starter plan or above). Keeps families and voice recordings across deploys:
+    # disk:
+    #   name: amma-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
+    # and add env vars: DATA_FILE=/var/data/db.json, AUDIO_DIR=/var/data/audio
