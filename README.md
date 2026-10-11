@@ -37,7 +37,7 @@ Most elder-care products are **apps**, and most elderly parents **don't use apps
 |---|---|
 | **Who uses it** | Parents aged 60+, any phone (landline, keypad or smartphone) |
 | **Who pays** | Their children, often earning well, often abroad |
-| **Why they pay** | Peace of mind. ₹499/month is a small price for not worrying |
+| **Why they pay** | Peace of mind. ₹299/month is a small price for not worrying |
 | **Why it's different** | No app, no smartphone, no learning. Just answer and press a number |
 
 ---
@@ -344,9 +344,9 @@ Voice    { id, familyId, parentId, speakerName, relation, callsThem, consentAt,
 
 | Plan | India | Abroad | Includes |
 |---|---|---|---|
-| One parent | ₹499/mo | $12/mo | Daily call, alerts, Sunday report |
-| Both parents | ₹799/mo | $19/mo | Separate calls for each, emergency contact |
-| Care+ | ₹999/mo | $24/mo | Morning + evening, sugar tracking, messages |
+| One parent | ₹299/mo | $12/mo | Daily call, alerts, Sunday report |
+| Both parents | ₹499/mo | $19/mo | Separate calls for each, emergency contact |
+| Care+ | ₹699/mo | $24/mo | Morning + evening, sugar tracking, messages |
 
 7-day free trial. Charge NRIs in dollars: the value is the same, their income is higher.
 
@@ -361,7 +361,7 @@ Monthly cost ≈ (≈30 calls × ~1 min × voice rate per minute)
 Keep calls short (about 60 seconds) and your margin stays healthy.
 
 ### Getting the first 10 paying families
-1. **Your own group.** Everyone has parents who fit. Ask: "Would you pay ₹499/month for this?"
+1. **Your own group.** Everyone has parents who fit. Ask: "Would you pay ₹299/month for this?"
 2. **Show the simulator.** Hand someone your phone with the dashboard open and let them be "Amma". It sells itself.
 3. **NRI WhatsApp and Telegram groups**, Telugu/Tamil associations abroad, LinkedIn posts with a 30-second demo video.
 4. **Ask every customer for 2 referrals.** Offer a free month for each one who joins.
@@ -389,7 +389,7 @@ Keep calls short (about 60 seconds) and your margin stays healthy.
 - **Sales:** talks to 10 families, records the demo video, collects payments
 
 **Saturday**
-- [ ] Morning: ask 5 friends "would you pay ₹499/month?" (if 3 say yes, build)
+- [ ] Morning: ask 5 friends "would you pay ₹299/month?" (if 3 say yes, build)
 - [ ] `npm install && npm run seed && npm start`, everyone tries the simulator
 - [ ] Get Twilio keys + ngrok, make the first real call to your own phone
 - [ ] Native speakers fix every line in `scripts.js`

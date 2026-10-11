@@ -13,9 +13,9 @@ const { LANGUAGES, line } = require('../engine/scripts');
 const router = express.Router();
 
 const PLANS = {
-  solo:   { name: 'One parent',  inr: 499, usd: 12 },
-  couple: { name: 'Both parents', inr: 799, usd: 19 },
-  care:   { name: 'Care+ (morning & evening)', inr: 999, usd: 24 },
+  solo:   { name: 'One parent',  inr: 299, usd: 12 },
+  couple: { name: 'Both parents', inr: 499, usd: 19 },
+  care:   { name: 'Care+ (morning & evening)', inr: 699, usd: 24 },
 };
 
 // How each language's call begins, for the language picker.
