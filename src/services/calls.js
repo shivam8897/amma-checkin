@@ -5,6 +5,35 @@ const voice = require('../providers/voice');
 const alerts = require('./alerts');
 const { buildSteps, finalize, today } = require('../engine/callFlow');
 
+/** True if `tz` is an IANA timezone this runtime understands (e.g. "Asia/Kolkata"). */
+function validTimezone(tz) {
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: tz });
+    return typeof tz === 'string' && tz.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+/** Which of the parent's calls is "now": the latest slot whose time has passed today, else the first. */
+function currentSlot(parent, date = new Date()) {
+  const hhmm = new Intl.DateTimeFormat('en-GB', { timeZone: parent.timezone || 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(date);
+  const passed = (parent.schedule || []).filter((s) => s.time <= hhmm).sort((a, b) => b.time.localeCompare(a.time));
+  return passed[0]?.slot || parent.schedule?.[0]?.slot || 'morning';
+}
+
+/** Today's check-in for this slot, started afresh if it already happened (for "Call now" and the simulator). */
+function freshCheckin(parent, slot) {
+  let checkin = findOrCreateCheckin(parent, slot);
+  if (checkin.completedAt || checkin.answeredAt) {
+    db.checkins.remove(checkin.id);
+    checkin = findOrCreateCheckin(parent, slot);
+  }
+  // A manual call replaces any retry still waiting for this check-in.
+  db.retries.filter((r) => r.checkinId === checkin.id).forEach((r) => db.retries.remove(r.id));
+  return checkin;
+}
+
 function findOrCreateCheckin(parent, slot, date = today(parent.timezone)) {
   const existing = db.checkins.find((c) => c.parentId === parent.id && c.date === date && c.slot === slot);
   if (existing) return existing;
@@ -61,4 +90,4 @@ async function callEnded(checkinId, callStatus, answeredBy) {
   return done;
 }
 
-module.exports = { findOrCreateCheckin, dial, callEnded };
+module.exports = { findOrCreateCheckin, freshCheckin, currentSlot, validTimezone, dial, callEnded };

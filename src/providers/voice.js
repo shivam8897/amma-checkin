@@ -31,24 +31,32 @@ function toTwiml(render, checkinId) {
 /** Start an outbound call. Twilio fetches /voice/start when the parent picks up. */
 async function placeCall(toPhone, checkinId) {
   const { accountSid, authToken, callerId } = config.twilio;
-  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Calls.json`, {
-    method: 'POST',
-    headers: {
-      Authorization: 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64'),
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      To: toPhone,
-      From: callerId,
-      Url: `${config.publicUrl}/voice/start?ci=${checkinId}`,
-      StatusCallback: `${config.publicUrl}/voice/status?ci=${checkinId}`,
-      StatusCallbackEvent: 'completed',
-      Timeout: '30', // ring for 30s (elderly people walk slowly to the phone)
-      MachineDetection: 'Enable', // don't "talk" to a voicemail box
-    }),
-  });
-  if (!res.ok) throw new Error(`Twilio call ${res.status}: ${await res.text()}`);
-  return (await res.json()).sid;
+  const basic = { To: toPhone, From: callerId, Url: `${config.publicUrl}/voice/start?ci=${checkinId}` };
+  const withStatus = { ...basic, StatusCallback: `${config.publicUrl}/voice/status?ci=${checkinId}` };
+  const full = {
+    ...withStatus,
+    StatusCallbackEvent: 'completed',
+    Timeout: '30', // ring for 30s (elderly people walk slowly to the phone)
+    MachineDetection: 'Enable', // don't "talk" to a voicemail box
+  };
+  // Twilio trial accounts refuse some options. Fall back step by step so calls still go out;
+  // without the status callback, unanswered calls aren't retried, so upgrade before real use.
+  for (const params of [full, withStatus, basic]) {
+    const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Calls.json`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64'),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(params),
+    });
+    const text = await res.text();
+    if (res.ok) return JSON.parse(text).sid;
+    if (!(res.status === 400 && /trial accounts have limited parameter access/i.test(text)) || params === basic) {
+      throw new Error(`Twilio call ${res.status}: ${text}`);
+    }
+    console.warn('[voice] Twilio trial account refused some call options; retrying with fewer.');
+  }
 }
 
 /** Verify X-Twilio-Signature so nobody can fake webhooks. */

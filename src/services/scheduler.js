@@ -19,43 +19,68 @@ function isPaused(parent, date) {
   return false;
 }
 
+// The server can miss a minute (restart, deploy, a sleeping free-tier host). A call that is
+// due but not yet placed still goes out if we're within this many minutes of its time.
+const CATCH_UP_MINUTES = 60;
+const minutes = (hhmm) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
+
+function isDue(slotTime, hhmm) {
+  const late = minutes(hhmm) - minutes(slotTime);
+  return late >= 0 && late < CATCH_UP_MINUTES;
+}
+
 async function tick(date = new Date()) {
   const placed = [];
+  // One bad record (say, an unknown timezone) must never stop everyone else's calls.
+  const safely = async (what, fn) => {
+    try { await fn(); } catch (e) { console.error(`[scheduler] ${what}:`, e.message); }
+  };
 
   // 1) Scheduled calls
   for (const parent of db.parents.all()) {
-    const tz = parent.timezone || 'Asia/Kolkata';
-    const localDate = today(tz, date);
-    if (isPaused(parent, localDate)) continue;
-    const family = db.families.get(parent.familyId);
-    if (!family || !['trial', 'active'].includes(family.status)) continue;
+    await safely(`parent ${parent.id}`, async () => {
+      const tz = parent.timezone || 'Asia/Kolkata';
+      const localDate = today(tz, date);
+      if (isPaused(parent, localDate)) return;
+      const family = db.families.get(parent.familyId);
+      if (!family || !['trial', 'active'].includes(family.status)) return;
 
-    const { hhmm } = nowIn(tz, date);
-    for (const slot of parent.schedule || []) {
-      if (slot.time !== hhmm) continue;
-      const checkin = calls.findOrCreateCheckin(parent, slot.slot, localDate);
-      if (checkin.status === 'scheduled') {
-        await calls.dial(checkin);
-        placed.push(checkin.id);
+      const { hhmm } = nowIn(tz, date);
+      for (const slot of parent.schedule || []) {
+        if (!isDue(slot.time, hhmm)) continue;
+        // Don't ring someone who signed up after today's call time; their first call is tomorrow.
+        if (parent.createdAt && today(tz, new Date(parent.createdAt)) === localDate && nowIn(tz, new Date(parent.createdAt)).hhmm > slot.time) continue;
+        const checkin = calls.findOrCreateCheckin(parent, slot.slot, localDate);
+        if (checkin.status === 'scheduled') {
+          await calls.dial(checkin);
+          placed.push(checkin.id);
+        }
       }
-    }
+    });
   }
 
   // 2) Retries that are due
   for (const r of [...db.retries.all()]) {
     if (r.dueAt > date.toISOString()) continue;
     db.retries.remove(r.id);
-    const checkin = db.checkins.get(r.checkinId);
-    if (checkin && !checkin.completedAt) {
-      await calls.dial(checkin);
-      placed.push(checkin.id);
-    }
+    await safely(`retry ${r.checkinId}`, async () => {
+      const checkin = db.checkins.get(r.checkinId);
+      if (checkin && !checkin.completedAt) {
+        await calls.dial(checkin);
+        placed.push(checkin.id);
+      }
+    });
   }
 
-  // 3) Weekly report: Sunday 19:00 in the family's timezone
+  // 3) Weekly report: Sunday from 19:00 in the family's timezone, once a week
   for (const family of db.families.all()) {
-    const { hhmm, weekday } = nowIn(family.timezone || 'Asia/Kolkata', date);
-    if (weekday === 'Sun' && hhmm === '19:00') await reports.sendWeekly(family.id, date);
+    await safely(`report ${family.id}`, async () => {
+      if (!['trial', 'active'].includes(family.status)) return;
+      const { hhmm, weekday } = nowIn(family.timezone || 'Asia/Kolkata', date);
+      if (weekday !== 'Sun' || !isDue('19:00', hhmm)) return;
+      if (family.lastReportAt && date - new Date(family.lastReportAt) < 6 * 86_400_000) return;
+      await reports.sendWeekly(family.id, date);
+    });
   }
 
   return placed;

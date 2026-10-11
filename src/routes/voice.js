@@ -13,6 +13,8 @@ router.use((req, res, next) => {
 });
 
 const sendTwiml = (res, xml) => res.type('text/xml').send(xml);
+// Express 4 doesn't catch rejected promises; without this, one failed webhook crashes the server.
+const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
 // Parent picked up.
 router.post('/start', (req, res) => {
@@ -26,18 +28,18 @@ router.post('/start', (req, res) => {
 });
 
 // Parent pressed keys (or timed out).
-router.post('/answer', async (req, res) => {
+router.post('/answer', wrap(async (req, res) => {
   const checkinId = req.query.ci;
   if (!db.checkins.get(checkinId)) return sendTwiml(res, '<Response><Hangup/></Response>');
   const render = await engine.answer(checkinId, Number(req.query.step), req.body.Digits || '');
   sendTwiml(res, voice.toTwiml(render, checkinId));
-});
+}));
 
 // Call ended (answered, no-answer, busy, failed...).
-router.post('/status', async (req, res) => {
+router.post('/status', wrap(async (req, res) => {
   const status = req.body.CallStatus === 'completed' ? 'completed' : req.body.CallStatus;
   await calls.callEnded(req.query.ci, status, req.body.AnsweredBy);
   res.sendStatus(204);
-});
+}));
 
 module.exports = router;

@@ -100,7 +100,7 @@ async function sendWeekly(familyId, from = new Date()) {
   const family = db.families.get(familyId);
   const body = composeWeekly(family, from);
   for (const c of (family.contacts || []).filter((c) => c.role === 'family')) await whatsapp.send(c.phone, body);
-  db.families.update(familyId, { lastReportAt: new Date().toISOString() });
+  db.families.update(familyId, { lastReportAt: from.toISOString() });
   return body;
 }
 

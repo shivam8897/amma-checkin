@@ -23,9 +23,13 @@ const SAMPLES = Object.fromEntries(Object.keys(LANGUAGES).map((k) => [k, line(k,
 
 const PHONE = /^\+\d{8,15}$/;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const clean = (s, max = 80) => String(s ?? '').trim().slice(0, max);
 
 function bad(res, msg) { return res.status(400).json({ error: msg }); }
+
+// Express 4 doesn't catch rejected promises; without this, one failed async handler crashes the server.
+const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
 // ── Auth: every family has a secret dashboard key (swap for phone OTP later) ──
 function requireFamily(req, res, next) {
@@ -44,9 +48,9 @@ function ownParent(req, res, next) {
 }
 
 function normalizeMedicines(list) {
-  return (list || [])
+  return (Array.isArray(list) ? list : [])
     .map((m) => (typeof m === 'string' ? { name: m } : m))
-    .filter((m) => clean(m.name))
+    .filter((m) => m && typeof m === 'object' && clean(m.name))
     .slice(0, 8)
     .map((m) => ({ id: m.id || db.id('med'), name: clean(m.name, 40), slot: m.slot === 'evening' ? 'evening' : 'morning' }));
 }
@@ -55,6 +59,7 @@ function makeParent(familyId, p) {
   if (!clean(p.name)) throw new Error('Parent name is required');
   if (!PHONE.test(p.phone || '')) throw new Error('Parent phone must look like +919876543210');
   if (!LANGUAGES[p.language]) throw new Error('Unsupported language');
+  if (p.timezone !== undefined && !calls.validTimezone(p.timezone)) throw new Error('Unknown timezone');
   const callTime = TIME.test(p.callTime || '') ? p.callTime : '08:30';
   const medicines = normalizeMedicines(p.medicines);
   const schedule = [{ slot: 'morning', time: callTime }];
@@ -93,6 +98,7 @@ router.post('/signup', (req, res) => {
   if (!clean(b.childName)) return bad(res, 'Your name is required');
   if (!PHONE.test(b.childPhone || '')) return bad(res, 'Your WhatsApp number must look like +919876543210');
   if (b.emergency?.phone && !PHONE.test(b.emergency.phone)) return bad(res, 'Emergency contact phone is invalid');
+  if (b.timezone !== undefined && !calls.validTimezone(b.timezone)) return bad(res, 'Unknown timezone');
   const plan = PLANS[b.plan] ? b.plan : 'solo';
 
   const family = {
@@ -114,7 +120,7 @@ router.post('/signup', (req, res) => {
 
   let parents;
   try {
-    parents = (b.parents || [b.parent]).filter(Boolean).slice(0, 2).map((p) => makeParent(family.id, p));
+    parents = (Array.isArray(b.parents) ? b.parents : [b.parent]).filter((p) => p && typeof p === 'object').slice(0, 2).map((p) => makeParent(family.id, p));
     if (!parents.length) throw new Error('Add at least one parent');
   } catch (e) {
     return bad(res, e.message);
@@ -175,7 +181,10 @@ router.patch('/parents/:id', requireFamily, ownParent, (req, res) => {
     patch.voiceId = v ? v.id : null;
   }
   if (b.askReading !== undefined) patch.askReading = b.askReading === 'sugar' ? 'sugar' : 'none';
-  if (b.pausedUntil !== undefined) patch.pausedUntil = b.pausedUntil || null;
+  if (b.pausedUntil !== undefined) {
+    if (b.pausedUntil && !DATE.test(b.pausedUntil)) return bad(res, 'Pause date must look like 2026-12-31');
+    patch.pausedUntil = b.pausedUntil || null;
+  }
   if (b.active !== undefined) patch.active = !!b.active;
   if (b.voiceNoteText !== undefined) { patch.voiceNoteText = clean(b.voiceNoteText, 300) || null; patch.voiceNotePlayedAt = null; }
   if (b.voiceNoteUrl !== undefined) { patch.voiceNoteUrl = /^https:\/\//.test(b.voiceNoteUrl) ? b.voiceNoteUrl : null; patch.voiceNotePlayedAt = null; }
@@ -196,8 +205,9 @@ router.patch('/parents/:id', requireFamily, ownParent, (req, res) => {
 });
 
 router.patch('/family/contacts', requireFamily, (req, res) => {
-  const contacts = (req.body.contacts || []).slice(0, 6);
-  for (const c of contacts) if (!PHONE.test(c.phone || '')) return bad(res, `Invalid phone for ${c.name || 'contact'}`);
+  if (!Array.isArray(req.body.contacts)) return bad(res, 'Send a list of contacts');
+  const contacts = req.body.contacts.slice(0, 6);
+  for (const c of contacts) if (!c || !PHONE.test(c.phone || '')) return bad(res, `Invalid phone for ${c?.name || 'contact'}`);
   const list = contacts.map((c) => ({ name: clean(c.name, 40), phone: c.phone, relation: clean(c.relation, 20), role: c.role === 'emergency' ? 'emergency' : 'family' }));
   if (!list.some((c) => c.role === 'family')) return bad(res, 'Keep at least one family member');
   res.json(db.families.update(req.family.id, { contacts: list }).contacts);
@@ -214,47 +224,34 @@ router.get('/report', requireFamily, (req, res) => {
 });
 
 // Ring the parent right now (real call when Twilio is configured).
-router.post('/parents/:id/call-now', requireFamily, ownParent, async (req, res) => {
-  const slot = req.parent.schedule[0]?.slot || 'morning';
-  let checkin = calls.findOrCreateCheckin(req.parent, slot);
-  if (checkin.completedAt) {
-    db.checkins.remove(checkin.id);
-    checkin = calls.findOrCreateCheckin(req.parent, slot);
-  }
+router.post('/parents/:id/call-now', requireFamily, ownParent, wrap(async (req, res) => {
+  const checkin = calls.freshCheckin(req.parent, calls.currentSlot(req.parent));
   res.json({ checkinId: checkin.id, ...(await calls.dial(checkin)) });
-});
+}));
 
 // ── Phone simulator (same engine as real calls) ───────────
 router.post('/simulate/start', requireFamily, ownParent, (req, res) => {
-  const slot = req.body.slot === 'evening' ? 'evening' : 'morning';
-  let checkin = calls.findOrCreateCheckin(req.parent, slot);
-  if (checkin.completedAt || checkin.answeredAt) {
-    db.checkins.remove(checkin.id); // re-run today's call
-    checkin = calls.findOrCreateCheckin(req.parent, slot);
-  }
+  // Which call to try: the one asked for, else the one that's due now (evening after the evening time).
+  const slot = ['morning', 'evening'].includes(req.body.slot) ? req.body.slot : calls.currentSlot(req.parent);
+  const checkin = calls.freshCheckin(req.parent, slot); // re-runs today's call if it already happened
   db.checkins.update(checkin.id, { attempts: 1, simulated: true });
   res.json({ checkinId: checkin.id, render: engine.start(checkin.id) });
 });
 
-router.post('/simulate/answer', requireFamily, async (req, res) => {
+router.post('/simulate/answer', requireFamily, wrap(async (req, res) => {
   const checkin = db.checkins.get(req.body.checkinId);
   if (!checkin || checkin.familyId !== req.family.id) return res.status(404).json({ error: 'Call not found' });
   res.json({ render: await engine.answer(checkin.id, Number(req.body.step), String(req.body.digits ?? '')) });
-});
+}));
 
-router.post('/simulate/hangup', requireFamily, async (req, res) => {
+router.post('/simulate/hangup', requireFamily, wrap(async (req, res) => {
   const checkin = db.checkins.get(req.body.checkinId);
   if (!checkin || checkin.familyId !== req.family.id) return res.status(404).json({ error: 'Call not found' });
   res.json(await calls.callEnded(checkin.id, 'completed'));
-});
+}));
 
-router.post('/simulate/no-answer', requireFamily, ownParent, async (req, res) => {
-  const slot = req.parent.schedule[0]?.slot || 'morning';
-  let checkin = calls.findOrCreateCheckin(req.parent, slot);
-  if (checkin.completedAt || checkin.answeredAt) {
-    db.checkins.remove(checkin.id);
-    checkin = calls.findOrCreateCheckin(req.parent, slot);
-  }
+router.post('/simulate/no-answer', requireFamily, ownParent, wrap(async (req, res) => {
+  const checkin = calls.freshCheckin(req.parent, calls.currentSlot(req.parent));
   // Fast-forward through every attempt.
   let result = checkin;
   for (let i = checkin.attempts; i < config.maxAttempts; i++) {
@@ -263,7 +260,7 @@ router.post('/simulate/no-answer', requireFamily, ownParent, async (req, res) =>
     result = await calls.callEnded(checkin.id, 'no-answer');
   }
   res.json(result);
-});
+}));
 
 // ── Family voices: calls in a son's or daughter's own voice ──
 function ownVoice(req, res, next) {
@@ -306,10 +303,10 @@ router.patch('/voices/:id', requireFamily, ownVoice, (req, res) => {
   res.json(voiceView(req));
 });
 
-router.delete('/voices/:id', requireFamily, ownVoice, async (req, res) => {
+router.delete('/voices/:id', requireFamily, ownVoice, wrap(async (req, res) => {
   await voices.removeVoice(req.voice.id);
   res.status(204).end();
-});
+}));
 
 // Upload one recorded line: 16-bit mono PCM WAV, made in the browser.
 router.put('/voices/:id/clips/:clipKey', requireFamily, ownVoice,
@@ -348,7 +345,7 @@ function requireAdmin(req, res, next) {
 router.get('/admin/families', requireAdmin, (req, res) => {
   res.json(db.families.all().map((f) => ({ ...f, parents: db.parents.filter((p) => p.familyId === f.id).length })));
 });
-router.post('/admin/tick', requireAdmin, async (req, res) => res.json({ placed: await scheduler.tick() }));
+router.post('/admin/tick', requireAdmin, wrap(async (req, res) => res.json({ placed: await scheduler.tick() })));
 router.post('/admin/families/:id/status', requireAdmin, (req, res) => {
   if (!['trial', 'active', 'paused', 'cancelled'].includes(req.body.status)) return bad(res, 'Bad status');
   res.json(db.families.update(req.params.id, { status: req.body.status }));

@@ -378,7 +378,7 @@ const SPEECH = Object.fromEntries(Object.keys(LANGS).map(k => [k, `${k}-IN`]));
 let data = null, offline = false, activeId = null;
 let animatedFor = null;        // play the entrance animation once per parent tab
 let freshAlerts = new Set();   // alerts that arrived since the last refresh
-let sim = { checkinId: null, render: null, entry: '' };
+let sim = { checkinId: null, render: null, entry: '', busy: false };
 
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2600); }
 
@@ -611,6 +611,8 @@ function bind() {
 
   // Settings
   const medRows = $('#med-rows');
+  medRows.onclick = removeRow;
+  $('#contact-rows').onclick = removeRow;
   $('#add-med').onclick = () => medRows.insertAdjacentHTML('beforeend', medRow());
   $('#add-contact').onclick = () => $('#contact-rows').insertAdjacentHTML('beforeend', contactRow());
   $('#parent-form').onsubmit = async (e) => {
@@ -675,7 +677,7 @@ async function simStart() {
   catch (e) { screenAdd(esc(e.message), 'sys'); $('#sim-start').disabled = false; }
 }
 async function press(key) {
-  if (!sim.render || sim.render.hangup) return;
+  if (!sim.render || sim.render.hangup || sim.busy) return;
   FX.sfx.key(key);
   const btn = document.querySelector(`[data-key="${CSS.escape(key)}"]`);
   btn?.classList.add('hit'); setTimeout(() => btn?.classList.remove('hit'), 140);
@@ -692,8 +694,10 @@ async function press(key) {
 }
 async function send(digits) {
   stopPlayback();
+  sim.busy = true; // one answer per question, even on a double tap
   try { const r = await api('/simulate/answer', { method: 'POST', body: JSON.stringify({ checkinId: sim.checkinId, step: sim.render.step, digits }) }); showRender(r.render); }
   catch (e) { screenAdd(esc(e.message), 'sys'); }
+  finally { sim.busy = false; }
 }
 async function simHangup() {
   stopPlayback();

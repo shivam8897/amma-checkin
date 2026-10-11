@@ -116,6 +116,11 @@ function start(checkinId) {
 /** Called with the digits the parent pressed ('' = timed out). */
 async function answer(checkinId, stepIdx, digits = '') {
   const checkin = db.checkins.get(checkinId);
+  // Keys pressed after the call ended (a late webhook, a stray tap) must not raise alerts.
+  if (checkin.completedAt) return { step: stepIdx, segments: [], gather: null, hangup: true };
+  // A repeated or out-of-order answer (webhook retry, double tap): ask the current question again.
+  const current = checkin.currentStep ?? 0;
+  if (stepIdx !== current) return renderFrom(checkin, current);
   const c = ctx(checkin);
   const step = checkin.steps[stepIdx];
   if (!step) return renderFrom(checkin, stepIdx);
