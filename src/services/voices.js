@@ -105,8 +105,8 @@ function writeFile(buf) {
   return file;
 }
 function removeFile(file) {
-  if (!file) return;
-  fs.rm(path.join(config.audioDir, path.basename(file)), { force: true }, () => {});
+  if (!file) return Promise.resolve();
+  return fs.promises.rm(path.join(config.audioDir, path.basename(file)), { force: true }).catch(() => {});
 }
 
 /** Save a clip (recorded in the dashboard, or adapted). Replaces any previous clip for that line. */
@@ -139,7 +139,7 @@ function removeClip(voiceId, clipKey) {
 async function removeVoice(voiceId) {
   const voice = db.voices.get(voiceId);
   if (!voice) return;
-  for (const clip of Object.values(voice.clips)) removeFile(clip.file);
+  await Promise.all(Object.values(voice.clips).map((clip) => removeFile(clip.file))); // gone before we say so
   if (voice.clone?.providerVoiceId && clone.enabled()) {
     await clone.deleteVoice(voice.clone.providerVoiceId).catch((e) => console.error('[voices]', e.message));
   }

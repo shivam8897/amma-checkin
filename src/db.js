@@ -11,10 +11,18 @@ let file = config.dataFile;
 
 function load() {
   if (state) return state;
+  let raw;
   try {
-    state = { ...EMPTY, ...JSON.parse(fs.readFileSync(file, 'utf8')) };
-  } catch {
-    state = structuredClone(EMPTY);
+    raw = fs.readFileSync(file, 'utf8');
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw err;
+    return (state = structuredClone(EMPTY)); // first run
+  }
+  try {
+    state = { ...EMPTY, ...JSON.parse(raw) };
+  } catch (err) {
+    // Starting empty here would overwrite every family on the next save.
+    throw new Error(`${file} is not valid JSON (${err.message}). Not starting, so it isn't overwritten. Restore it from a backup (or ${file}.tmp) first.`);
   }
   return state;
 }
@@ -73,9 +81,13 @@ module.exports = {
   id,
   token,
   flush,
+  load,
   // Used by tests to point at a throwaway file.
   _reset(newFile) {
     file = newFile || config.dataFile;
     state = structuredClone(EMPTY);
+  },
+  _unload() {
+    state = null;
   },
 };

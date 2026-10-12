@@ -133,6 +133,10 @@ td { padding: 11px 10px 11px 0; border-top: 1px solid var(--line); vertical-alig
 .alert.done { opacity: .62; }
 .alert strong { display: block; font-weight: 600; line-height: 1.35; }
 .alert-meta { display: flex; justify-content: space-between; gap: 8px; align-items: center; font-size: .82rem; color: var(--ink-soft); margin-top: 6px; }
+.dlv { font-weight: 700; margin-left: 2px; }
+.dlv.read { color: #2a7de1; }
+.dlv.failed { color: var(--postmark); }
+.alert-fail { font-size: .8rem; color: var(--postmark); margin-top: 4px; }
 .ack { border: 0; background: var(--sheet); border-radius: 999px; padding: 3px 10px; font-weight: 600; font-size: .8rem; cursor: pointer; }
 .empty { color: var(--ink-soft); padding: 8px 0; }
 
@@ -380,7 +384,7 @@ let animatedFor = null;        // play the entrance animation once per parent ta
 let freshAlerts = new Set();   // alerts that arrived since the last refresh
 let sim = { checkinId: null, render: null, entry: '', busy: false };
 
-function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2600); }
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), Math.max(2600, msg.length * 55)); }
 
 async function api(path, opts = {}) {
   if (offline) throw new Error('This is a static preview. Start the server (npm start) to make changes.');
@@ -500,10 +504,18 @@ function callsTable(p) {
   <div class="table-scroll"><table><thead><tr><th>Day</th><th>Call</th><th>Medicines</th><th>Feeling</th></tr></thead><tbody>${rows || '<tr><td colspan="4" class="empty">No calls yet. The first one goes out at the time you chose.</td></tr>'}</tbody></table></div></section>`;
 }
 
+// Old alerts only have `ok`; newer ones carry the provider's receipt: sending → sent → delivered → read, or failed.
+const deliveryState = (d) => d.status || (d.ok === false ? 'failed' : 'sent');
+const DELIVERY = { sending: ['…', 'Sending'], sent: ['✓', 'Sent'], delivered: ['✓✓', 'Delivered'], read: ['✓✓', 'Read'], failed: ['⚠', 'Not delivered'] };
+function deliveryMark(d) {
+  const [mark, label] = DELIVERY[deliveryState(d)] || [];
+  return mark ? `<span class="dlv ${deliveryState(d)}" title="${label}" aria-label="${label}">${mark}</span>` : '';
+}
+
 function alertsPanel() {
   const list = data.alerts.filter(a => a.parentId === activeId).slice(0, 8);
   return `<section class="panel"><div class="panel-head"><h2>Alerts</h2><span class="muted">Sent to WhatsApp</span></div>
-  ${list.length ? `<ul class="alert-list">${list.map(a => `<li class="alert ${a.severity === 'urgent' ? 'urgent' : ''} ${a.acknowledged ? 'done' : ''} ${freshAlerts.has(a.id) ? 'fresh' : ''}"><strong>${esc(a.title)}</strong><div class="alert-meta"><span>${ago(a.createdAt)} · to ${a.deliveries.map(d => esc(d.name)).join(', ')}</span>${a.acknowledged ? '<span>Handled</span>' : `<button class="ack" data-ack="${a.id}">Mark handled</button>`}</div></li>`).join('')}</ul>` : '<p class="empty">No alerts. That means every call went well.</p>'}</section>`;
+  ${list.length ? `<ul class="alert-list">${list.map(a => `<li class="alert ${a.severity === 'urgent' ? 'urgent' : ''} ${a.acknowledged ? 'done' : ''} ${freshAlerts.has(a.id) ? 'fresh' : ''}"><strong>${esc(a.title)}</strong><div class="alert-meta"><span>${ago(a.createdAt)} · to ${a.deliveries.map(d => esc(d.name) + deliveryMark(d)).join(', ')}</span>${a.acknowledged ? '<span>Handled</span>' : `<button class="ack" data-ack="${a.id}">Mark handled</button>`}</div>${a.deliveries.filter(d => deliveryState(d) === 'failed').map(d => `<div class="alert-fail">⚠ WhatsApp did not reach ${esc(d.name)}${d.error ? `: ${esc(d.error)}` : ''}</div>`).join('')}</li>`).join('')}</ul>` : '<p class="empty">No alerts. That means every call went well.</p>'}</section>`;
 }
 
 function phonePanel(p) {
@@ -550,7 +562,7 @@ function settingsPanel(p) {
     </section>
     <section class="panel"><h2>Who gets alerts</h2><p class="muted" style="margin-bottom:14px">Emergency contacts only get urgent alerts: no answer and pressed 9.</p>
       <form id="contacts-form"><div class="rows" id="contact-rows">${data.family.contacts.map(contactRow).join('')}</div>
-      <div class="actions" style="margin-top:12px"><button type="button" class="btn btn-soft" id="add-contact">Add person</button><button class="btn" type="submit">Save people</button></div></form>
+      <div class="actions" style="margin-top:12px"><button type="button" class="btn btn-soft" id="add-contact">Add person</button><button class="btn" type="submit">Save people</button><button type="button" class="btn btn-soft" id="test-wa">Send a test WhatsApp</button></div></form>
     </section>
   </div></div>`;
 }
@@ -627,6 +639,14 @@ function bind() {
     e.preventDefault();
     const contacts = [...$('#contact-rows').querySelectorAll('.row')].map(r => ({ name: r.querySelector('[name=cName]').value, phone: r.querySelector('[name=cPhone]').value.replace(/[\s-]/g, ''), role: r.querySelector('[name=cRole]').value, relation: r.querySelector('[name=cRel]').value })).filter(c => c.name || c.phone);
     try { await api('/family/contacts', { method: 'PATCH', body: JSON.stringify({ contacts }) }); toast('People saved'); await load(); } catch (ex) { toast(ex.message); }
+  };
+  $('#test-wa').onclick = async () => {
+    try {
+      const r = await api('/family/contacts/test', { method: 'POST' });
+      const failed = r.results.filter(x => !x.ok);
+      if (r.provider === 'console') toast('WhatsApp is not connected on this server yet, so the test was only printed in the server log.');
+      else toast(failed.length ? `Could not reach ${failed.map(x => x.name).join(', ')}: ${failed[0].error}` : `Test sent to ${r.results.map(x => x.name).join(', ')}. Check your WhatsApp.`);
+    } catch (e) { toast(e.message); }
   };
   $('#call-now').onclick = async () => { try { const r = await api(`/parents/${activeId}/call-now`, { method: 'POST' }); toast(r.demo ? 'Demo mode: use the phone above to answer.' : 'Calling now…'); await load(); } catch (e) { toast(e.message); } };
 }

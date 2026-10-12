@@ -40,7 +40,7 @@ async function placeCall(toPhone, checkinId) {
     MachineDetection: 'Enable', // don't "talk" to a voicemail box
   };
   // Twilio trial accounts refuse some options. Fall back step by step so calls still go out;
-  // without the status callback, unanswered calls aren't retried, so upgrade before real use.
+  // without the status callback, unanswered calls are only noticed ~10 minutes later (scheduler).
   for (const params of [full, withStatus, basic]) {
     const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Calls.json`, {
       method: 'POST',

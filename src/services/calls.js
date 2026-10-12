@@ -57,7 +57,8 @@ async function dial(checkin) {
   const attempts = (checkin.attempts || 0) + 1;
   db.checkins.update(checkin.id, { status: 'ringing', attempts, lastAttemptAt: new Date().toISOString() });
 
-  if (config.demoMode) {
+  // The demo family's numbers are made up: simulate its calls even on a live server.
+  if (config.demoMode || db.families.get(checkin.familyId)?.demo) {
     console.log(`[demo] Would call ${parent.name} (${parent.phone}) — attempt ${attempts}. Open the dashboard simulator to answer.`);
     return { demo: true };
   }
