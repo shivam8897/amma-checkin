@@ -61,6 +61,7 @@ Most elder-care products are **apps**, and most elderly parents **don't use apps
 - **Patient by design**: rings for 30 seconds, repeats a question once if there's no answer, then moves on
 - **Voicemail detection**: never "talks" to an answering machine
 - **Retries**: if unanswered, calls again after 15 minutes (configurable)
+- **Never stuck**: if Twilio's end-of-call webhook is lost (server asleep, restarting), the call is closed after 10 minutes, so it still retries and still alerts the family
 
 **For children (alerts and dashboard)**
 - **Instant WhatsApp alerts** for: SOS, no answer, unwell, missed medicine, sugar out of range, opted out
@@ -78,7 +79,7 @@ Most elder-care products are **apps**, and most elderly parents **don't use apps
 - Works with **zero API keys** in demo mode
 - Twilio voice (TwiML) + Twilio or Meta WhatsApp, behind small provider modules so you can swap in Exotel/Plivo
 - Twilio **webhook signature validation**
-- 23 automated tests covering the call logic, meals and family voices
+- 43 automated tests covering the call logic, meals, family voices and WhatsApp delivery
 - Only one dependency (Express); data in a JSON file you can later move to Postgres
 - **Motion and sound** (`public/fx.js`, `fx.css`): real phone keypad tones, ringback and hang-up sounds in the simulator, scroll reveals, count-ups, confetti on milestones. All sounds are made in the browser (no audio files), play only after a click, and have a 🔊 mute switch; all motion turns off with the system's "reduce motion" setting
 
@@ -204,8 +205,30 @@ Twilio must reach your server over HTTPS.
 > **Calling Indian numbers:** check your provider's current per-minute rates to India and their rules for caller ID. For production in India, providers with local presence (Exotel, Plivo, Knowlarity) often give Indian caller IDs and lower rates, and handle Indian telecom (TRAI/DLT) requirements. Add a new adapter next to `src/providers/voice.js`: implement `placeCall()` and a renderer for their XML/JSON format. The engine doesn't change.
 
 ### Step 3: WhatsApp alerts
-- **Testing:** Twilio WhatsApp Sandbox. Set `WHATSAPP_PROVIDER=twilio` and have each family member join the sandbox once.
-- **Production:** a WhatsApp Business number via Twilio or Meta Cloud API (`WHATSAPP_PROVIDER=meta`). Messages you start (alerts) outside a 24-hour chat window must use **pre-approved templates**, so register one template per alert type and the weekly report.
+- **Testing:** Twilio WhatsApp Sandbox. Set `WHATSAPP_PROVIDER=twilio` and have each family member join the sandbox once. The sandbox only delivers within 24 hours of that person's last message to it, so send it a "hi" before a test.
+- **Production:** a WhatsApp Business number via Twilio or Meta Cloud API (`WHATSAPP_PROVIDER=meta`).
+
+**The 24-hour rule (why alerts silently stop arriving).** WhatsApp only allows free-form text within 24 hours of the person's last message to you. Alerts are almost always outside that window. Both providers *accept* such a message and then drop it, so without a template your alerts look sent but never arrive. Register one **Utility** template with two variables and the app sends every alert and report through it:
+
+```
+{{1}}
+
+{{2}}
+
+Amma Check-in · open your dashboard for details
+```
+
+`{{1}}` is the alert title ("🆘 Lakshmi pressed 9 and wants you to call"), `{{2}}` the details, on one line.
+- Meta: create it in WhatsApp Manager, then set `META_WA_TEMPLATE=<template name>` (and `META_WA_TEMPLATE_LANG` if it isn't `en`).
+- Twilio: create it in Content Template Builder, get it approved for WhatsApp, then set `TWILIO_WHATSAPP_CONTENT_SID=HX…`.
+
+**Delivery receipts.** The dashboard shows ✓ sent, ✓✓ delivered, blue ✓✓ read, or ⚠ with the reason a message didn't arrive.
+- Twilio: nothing to set up. Each message asks Twilio to report back to `/whatsapp/twilio-status` (needs an `https` `PUBLIC_URL`).
+- Meta: in your app's WhatsApp → Configuration, set the callback URL to `https://<your-url>/whatsapp/meta`, the verify token to `META_WA_VERIFY_TOKEN`, and subscribe to `messages`. Set `META_APP_SECRET` (App settings → Basic) so we can check that receipts really come from Meta.
+
+**Check it works:** on the dashboard, under "Who gets alerts", press **Send a test WhatsApp**. The server also prints any setting that would stop alerts arriving when it starts.
+
+Alerts are saved at once and sent in the background (each send times out after 10 seconds and is retried once), so a slow WhatsApp API never holds up the phone call.
 
 ### Step 4: Voice quality (this matters most)
 Default voices use Twilio's Google voices (`te-IN`, `hi-IN`, `ta-IN`, `en-IN`), set in `src/engine/scripts.js`.
@@ -234,6 +257,11 @@ Later: subscription webhooks that update status automatically.
 | `WHATSAPP_PROVIDER` | console | `twilio`, `meta` or `console` |
 | `TWILIO_WHATSAPP_FROM` | sandbox | WhatsApp sender |
 | `META_WA_TOKEN` / `META_WA_PHONE_NUMBER_ID` | | Meta Cloud API |
+| `META_WA_TEMPLATE` / `META_WA_TEMPLATE_LANG` | / en | Approved template for alerts and reports (Meta) |
+| `META_WA_VERIFY_TOKEN` / `META_APP_SECRET` | | Delivery receipts from Meta |
+| `META_WA_API_VERSION` | v21.0 | Graph API version |
+| `TWILIO_WHATSAPP_CONTENT_SID` | | Approved template for alerts and reports (Twilio) |
+| `WHATSAPP_TIMEOUT_MS` | 10000 | Give up on a WhatsApp send after this long |
 | `RETRY_AFTER_MINUTES` | 15 | Wait before retry |
 | `MAX_ATTEMPTS` | 2 | Attempts before NO_ANSWER alert |
 | `SUGAR_LOW` / `SUGAR_HIGH` | 70 / 250 | Alert thresholds (mg/dL) |
@@ -274,10 +302,12 @@ amma-checkin/
 │   │   └── scheduler.js    Runs every minute
 │   └── routes/
 │       ├── api.js          JSON API for web pages
-│       └── voice.js        Twilio webhooks
+│       ├── voice.js        Twilio webhooks
+│       └── whatsapp.js     WhatsApp delivery receipts (Twilio, Meta)
 ├── scripts/seed.js         Demo family with 2 weeks of history
-├── test/callFlow.test.js   13 tests: the call logic
-├── test/voices.test.js     10 tests: meals, family voices, uploads
+├── test/callFlow.test.js   20 tests: the call logic
+├── test/voices.test.js     12 tests: meals, family voices, uploads
+├── test/whatsapp.test.js   11 tests: WhatsApp delivery, receipts, stuck calls
 └── data/                   db.json and audio/ live here (git-ignored)
 ```
 
@@ -306,7 +336,9 @@ Family endpoints need the header `x-family-key: <key>` (or `?key=`). The key is 
 | GET | `/api/admin/families` | All families (needs `x-admin-token`) |
 | POST | `/api/admin/tick` | Run the scheduler once |
 | POST | `/api/admin/families/:id/status` | trial / active / paused / cancelled |
+| POST | `/api/family/contacts/test` | Send a test WhatsApp to everyone who gets alerts |
 | POST | `/voice/start` · `/voice/answer` · `/voice/status` | Twilio webhooks |
+| POST | `/whatsapp/twilio-status` · GET/POST `/whatsapp/meta` | WhatsApp delivery receipts |
 | GET | `/health` | Health check |
 
 ---
@@ -329,7 +361,8 @@ CheckIn  { id, parentId, familyId, date, slot, status, attempts, steps[],
            status: scheduled → ringing → in_progress → completed | partial | no_answer | opted_out
                                        ↘ retry_scheduled ↗
 
-Alert    { id, familyId, parentId, checkinId, type, severity, title, message, deliveries[], acknowledged }
+Alert    { id, familyId, parentId, checkinId, type, severity, title, message, acknowledged,
+           deliveries: [{ to, name, status: sending|sent|delivered|read|failed|skipped, id, error }] }
 
 Voice    { id, familyId, parentId, speakerName, relation, callsThem, consentAt,
            clips: { [line]: { file, durationMs, peaks[], source: recorded|adapted, medName?, text? } },

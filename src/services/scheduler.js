@@ -1,8 +1,9 @@
 // Runs every minute: places due calls, retries, and sends Sunday reports.
 const db = require('../db');
+const config = require('../config');
 const calls = require('./calls');
 const reports = require('./reports');
-const { today } = require('../engine/callFlow');
+const { today, finalize } = require('../engine/callFlow');
 
 function nowIn(tz, date = new Date()) {
   const parts = Object.fromEntries(
@@ -18,6 +19,13 @@ function isPaused(parent, date) {
   if (parent.pausedUntil && parent.pausedUntil >= date) return true; // travelling, hospital, visiting family
   return false;
 }
+
+// Twilio's end-of-call webhook can go missing (server asleep or restarting, or a trial account
+// that refused the status callback). After this long without it we close the call ourselves,
+// so an unanswered call still retries and still alerts the family.
+const STALE_RINGING_MS = 10 * 60_000;
+const STALE_CALL_MS = 30 * 60_000;
+const STALE_QUIET_MS = 6 * 3_600_000;
 
 // The server can miss a minute (restart, deploy, a sleeping free-tier host). A call that is
 // due but not yet placed still goes out if we're within this many minutes of its time.
@@ -44,6 +52,7 @@ async function tick(date = new Date()) {
       if (isPaused(parent, localDate)) return;
       const family = db.families.get(parent.familyId);
       if (!family || !['trial', 'active'].includes(family.status)) return;
+      if (family.demo && !config.demoMode) return; // made-up numbers: never ring them for real
 
       const { hhmm } = nowIn(tz, date);
       for (const slot of parent.schedule || []) {
@@ -72,7 +81,23 @@ async function tick(date = new Date()) {
     });
   }
 
-  // 3) Weekly report: Sunday from 19:00 in the family's timezone, once a week
+  // 3) Calls we never heard back about
+  if (!config.demoMode) {
+    for (const c of db.checkins.filter((c) => !c.completedAt && ['ringing', 'in_progress'].includes(c.status))) {
+      await safely(`stale call ${c.id}`, async () => {
+        const ringing = c.status === 'ringing';
+        const since = new Date((ringing ? c.lastAttemptAt : c.updatedAt || c.answeredAt) || c.createdAt);
+        if (date - since < (ringing ? STALE_RINGING_MS : STALE_CALL_MS)) return;
+        console.warn(`[scheduler] no end-of-call webhook for ${c.id} (${c.status}); closing it`);
+        // Hours old (say, from before a long outage): close it quietly. Ringing now, or alerting
+        // about it now, would be about the wrong day.
+        if (date - since > STALE_QUIET_MS) return finalize(c, ringing ? 'no_answer' : 'completed');
+        await calls.callEnded(c.id, ringing ? 'no-answer' : 'completed');
+      });
+    }
+  }
+
+  // 4) Weekly report: Sunday from 19:00 in the family's timezone, once a week
   for (const family of db.families.all()) {
     await safely(`report ${family.id}`, async () => {
       if (!['trial', 'active'].includes(family.status)) return;

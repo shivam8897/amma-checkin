@@ -22,6 +22,16 @@ const config = {
     provider: env.WHATSAPP_PROVIDER || 'console',
     metaToken: env.META_WA_TOKEN || '',
     metaPhoneNumberId: env.META_WA_PHONE_NUMBER_ID || '',
+    metaApiVersion: env.META_WA_API_VERSION || 'v21.0',
+    // Messages we start (alerts, reports) need an approved template once the family hasn't
+    // messaged us for 24 hours. Without one, WhatsApp accepts the send and then drops it.
+    metaTemplate: env.META_WA_TEMPLATE || '',
+    metaTemplateLang: env.META_WA_TEMPLATE_LANG || 'en',
+    // Delivery receipts: Meta calls /whatsapp/meta; it checks this token once when you subscribe.
+    metaVerifyToken: env.META_WA_VERIFY_TOKEN || '',
+    metaAppSecret: env.META_APP_SECRET || '',
+    twilioContentSid: env.TWILIO_WHATSAPP_CONTENT_SID || '',
+    timeoutMs: Number(env.WHATSAPP_TIMEOUT_MS || 10_000),
   },
 
   // Optional voice adaptation: learns the family member's voice from their recordings,

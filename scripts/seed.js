@@ -18,6 +18,7 @@ async function main() {
   const family = db.families.insert({
     id: db.id('fam'), accessKey: KEY, childName: 'Shivam', email: 'shivam@example.com',
     plan: 'couple', currency: 'usd', status: 'active', timezone: TZ,
+    demo: true, // made-up numbers: never called or messaged for real, even on a live server
     contacts: [
       { name: 'Shivam', phone: '+14155550101', relation: 'Son', role: 'family' },
       { name: 'Priya', phone: '+919900000002', relation: 'Daughter', role: 'family' },
@@ -80,7 +81,10 @@ async function main() {
       });
       if (daysAgo <= 10) {
         // Recreate the alerts these days would have produced (timestamps backdated).
-        const raise = async (type, data) => { const a = await alerts.raise(checkin, type, data); db.alerts.update(a.id, { createdAt: time, acknowledged: daysAgo > 1 }); };
+        const raise = async (type, data) => {
+          const a = await alerts.raise(checkin, type, data, { deliver: false }); // history: nothing to send
+          db.alerts.update(a.id, { createdAt: time, acknowledged: daysAgo > 1, deliveries: a.deliveries.map((d) => ({ ...d, status: 'read' })) });
+        };
         if (status === 'no_answer') await raise('NO_ANSWER', { attempts: 2 });
         if (answers.mood === 'unwell') await raise('UNWELL');
         if (answers.meal === 'skipped') await raise('MEAL_SKIPPED', { meal: slot === 'evening' ? 'dinner' : 'breakfast' });

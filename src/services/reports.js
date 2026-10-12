@@ -1,6 +1,7 @@
 // Weekly report + the statistics shown on the dashboard.
 const db = require('../db');
 const whatsapp = require('../providers/whatsapp');
+const alerts = require('./alerts');
 const { today } = require('../engine/callFlow');
 
 function lastNDates(n, tz, from = new Date()) {
@@ -99,8 +100,14 @@ function composeWeekly(family, from = new Date()) {
 async function sendWeekly(familyId, from = new Date()) {
   const family = db.families.get(familyId);
   const body = composeWeekly(family, from);
-  for (const c of (family.contacts || []).filter((c) => c.role === 'family')) await whatsapp.send(c.phone, body);
-  db.families.update(familyId, { lastReportAt: from.toISOString() });
+  const results = [];
+  if (alerts.shouldDeliver(family)) {
+    for (const c of (family.contacts || []).filter((c) => c.role === 'family')) {
+      const res = await whatsapp.send(c.phone, body);
+      results.push({ to: c.phone, name: c.name, status: res.status, id: res.id || null, error: res.error || null });
+    }
+  }
+  db.families.update(familyId, { lastReportAt: from.toISOString(), lastReportDeliveries: results });
   return body;
 }
 

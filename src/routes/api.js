@@ -8,6 +8,8 @@ const reports = require('../services/reports');
 const scheduler = require('../services/scheduler');
 const voices = require('../services/voices');
 const voiceClone = require('../providers/voiceClone');
+const whatsapp = require('../providers/whatsapp');
+const alerts = require('../services/alerts');
 const { LANGUAGES, line } = require('../engine/scripts');
 
 const router = express.Router();
@@ -213,6 +215,22 @@ router.patch('/family/contacts', requireFamily, (req, res) => {
   res.json(db.families.update(req.family.id, { contacts: list }).contacts);
 });
 
+// Send a test message to everyone who gets alerts, so families can check WhatsApp works.
+const lastTest = new Map(); // familyId → time of the last test (in memory; just to stop spamming)
+router.post('/family/contacts/test', requireFamily, wrap(async (req, res) => {
+  const family = req.family;
+  if (Date.now() - (lastTest.get(family.id) || 0) < 60_000) return res.status(429).json({ error: 'Please wait a minute before sending another test' });
+  if (!alerts.shouldDeliver(family)) return bad(res, 'The demo family has made-up numbers, so no real messages are sent');
+  lastTest.set(family.id, Date.now());
+  const names = db.parents.filter((p) => p.familyId === family.id).map((p) => p.name).join(' and ');
+  const body = [`👋 *Test message from Amma Check-in*`, '', `This is how alerts about ${names} will reach you. Nothing is wrong.`, '', 'Amma Check-in'].join('\n');
+  const results = await Promise.all((family.contacts || []).map(async (c) => {
+    const r = await whatsapp.send(c.phone, body);
+    return { name: c.name, to: c.phone, ok: r.ok, error: r.error || null };
+  }));
+  res.json({ provider: config.whatsapp.provider, results });
+}));
+
 router.post('/alerts/:id/ack', requireFamily, (req, res) => {
   const alert = db.alerts.get(req.params.id);
   if (!alert || alert.familyId !== req.family.id) return res.status(404).json({ error: 'Not found' });
@@ -339,6 +357,8 @@ router.post('/voices/:id/adapt', requireFamily, ownVoice, (req, res) => {
 
 // ── Admin ─────────────────────────────────────────────────
 function requireAdmin(req, res, next) {
+  // On a live server the default token would let anyone in, so the admin API stays off until it's changed.
+  if (!config.demoMode && config.adminToken === 'change-me') return res.status(503).json({ error: 'Set ADMIN_TOKEN to use the admin API' });
   if (req.get('x-admin-token') !== config.adminToken) return res.status(401).json({ error: 'Unauthorized' });
   next();
 }
